@@ -1,0 +1,438 @@
+package utilities;
+
+import com.jayway.jsonpath.JsonPath;
+import model.ValidationResult;
+
+import java.util.List;
+import java.util.Map;
+
+public class CompareUtil {
+
+    public static void compare(
+
+            Map<String,
+                    Map<String, String>> excelData,
+
+            Map<String, String> jsonVersions,
+
+            String workbookName,
+
+            String jsonName,
+
+            String policyNumber) {
+
+        Map<String, String> mappings =
+                JsonPathMappingUtil.getMappings();
+
+        /*
+         * STORE PREVIOUS VERSION FIELDS
+         */
+
+        Map<String, String> previousFields =
+                null;
+
+        /*
+         * =====================================
+         * LOOP THROUGH ALL VERSIONS
+         * =====================================
+         */
+
+        for (String version :
+                excelData.keySet()) {
+
+            String json =
+                    jsonVersions.get(version);
+
+            if (json == null) {
+
+                System.out.println(
+                        "JSON NOT FOUND FOR VERSION : "
+                                + version);
+
+                continue;
+            }
+
+            Map<String, String> fields =
+                    excelData.get(version);
+
+            /*
+             * =====================================
+             * VERSION DIFFERENCE CHECK
+             * =====================================
+             */
+
+            if (previousFields != null) {
+
+                /*
+                 * MISSING FIELDS
+                 */
+
+                for (String previousField :
+                        previousFields.keySet()) {
+
+                    if (!fields.containsKey(
+                            previousField)) {
+
+                        ValidationResult validation =
+                                new ValidationResult();
+
+                        validation.setPolicyNumber(
+                                policyNumber);
+
+                        validation.setVersion(
+                                version);
+
+                        validation.setFieldName(
+                                previousField);
+
+                        validation.setExpectedValue(
+                                previousFields.get(
+                                        previousField));
+
+                        validation.setActualValue(
+                                "FIELD NOT PRESENT");
+
+                        validation.setStatus(
+                                "MISSING_IN_CURRENT_VERSION");
+
+                        validation.setWorkbookFile(
+                                workbookName);
+
+                        validation.setJsonFile(
+                                jsonName);
+
+                        ResultStore.results.add(
+                                validation);
+                    }
+                }
+
+                /*
+                 * NEW FIELDS
+                 */
+
+                for (String currentField :
+                        fields.keySet()) {
+
+                    if (!previousFields.containsKey(
+                            currentField)) {
+
+                        ValidationResult validation =
+                                new ValidationResult();
+
+                        validation.setPolicyNumber(
+                                policyNumber);
+
+                        validation.setVersion(
+                                version);
+
+                        validation.setFieldName(
+                                currentField);
+
+                        validation.setExpectedValue(
+                                "FIELD NOT IN PREVIOUS VERSION");
+
+                        validation.setActualValue(
+                                fields.get(
+                                        currentField));
+
+                        validation.setStatus(
+                                "NEW_FIELD_IN_CURRENT_VERSION");
+
+                        validation.setWorkbookFile(
+                                workbookName);
+
+                        validation.setJsonFile(
+                                jsonName);
+
+                        ResultStore.results.add(
+                                validation);
+                    }
+                }
+            }
+
+            /*
+             * =====================================
+             * CONTEXT VALUES
+             * =====================================
+             */
+
+            String classNumber = "";
+
+            if (fields.containsKey(
+                    "Class Number")) {
+
+                classNumber =
+                        normalize(
+                                fields.get(
+                                        "Class Number"));
+            }
+
+            /*
+             * =====================================
+             * LOOP THROUGH EXCEL FIELDS
+             * =====================================
+             */
+
+            for (String excelField :
+                    fields.keySet()) {
+
+                String expected =
+                        normalize(
+                                fields.get(
+                                        excelField));
+
+                String jsonPath =
+                        mappings.get(
+                                excelField);
+
+                /*
+                 * =====================================
+                 * NO MAPPING FOUND
+                 * =====================================
+                 */
+
+                if (jsonPath == null) {
+
+                    ValidationResult validation =
+                            new ValidationResult();
+
+                    validation.setPolicyNumber(
+                            policyNumber);
+
+                    validation.setVersion(
+                            version);
+
+                    validation.setFieldName(
+                            excelField);
+
+                    validation.setExpectedValue(
+                            expected);
+
+                    validation.setActualValue(
+                            "MAPPING NOT FOUND");
+
+                    validation.setStatus(
+                            "NO_MAPPING");
+
+                    validation.setWorkbookFile(
+                            workbookName);
+
+                    validation.setJsonFile(
+                            jsonName);
+
+                    ResultStore.results.add(
+                            validation);
+
+                    continue;
+                }
+
+                /*
+                 * =====================================
+                 * DYNAMIC CLASS FILTERING
+                 * =====================================
+                 */
+
+                if (excelField.equalsIgnoreCase(
+                        "Class Number")) {
+
+                    jsonPath =
+                            "$.plans[*].coverages[*]"
+                            + ".classes"
+                            + "[?(@.classNumber=="
+                            + classNumber
+                            + ")]"
+                            + ".classNumber";
+                }
+
+                if (excelField.equalsIgnoreCase(
+                        "Description")) {
+
+                    jsonPath =
+                            "$.plans[*].coverages[*]"
+                            + ".classes"
+                            + "[?(@.classNumber=="
+                            + classNumber
+                            + ")]"
+                            + ".classDescription";
+                }
+
+                if (excelField.equalsIgnoreCase(
+                        "Class Name")) {
+
+                    jsonPath =
+                            "$.plans[*].coverages[*]"
+                            + ".classes"
+                            + "[?(@.classNumber=="
+                            + classNumber
+                            + ")]"
+                            + ".classDescription";
+                }
+
+                if (excelField.equalsIgnoreCase(
+                        "Full Time Hours")) {
+
+                    jsonPath =
+                            "$.plans[*].coverages[*]"
+                            + ".classes"
+                            + "[?(@.classNumber=="
+                            + classNumber
+                            + ")]"
+                            + ".fullTimeHours";
+                }
+
+                if (excelField.equalsIgnoreCase(
+                        "Part Time Hours")) {
+
+                    jsonPath =
+                            "$.plans[*].coverages[*]"
+                            + ".classes"
+                            + "[?(@.classNumber=="
+                            + classNumber
+                            + ")]"
+                            + ".partTimeHours";
+                }
+
+                /*
+                 * =====================================
+                 * READ JSON VALUE
+                 * =====================================
+                 */
+
+                String actual = "";
+
+                try {
+
+                    Object result =
+                            JsonPath.read(
+                                    json,
+                                    jsonPath);
+
+                    actual =
+                            normalize(
+                                    extractValue(
+                                            result));
+
+                } catch (Exception e) {
+
+                    actual =
+                            "JSONPATH ERROR";
+                }
+
+                /*
+                 * =====================================
+                 * CREATE RESULT OBJECT
+                 * =====================================
+                 */
+
+                ValidationResult validation =
+                        new ValidationResult();
+
+                validation.setPolicyNumber(
+                        policyNumber);
+
+                validation.setVersion(
+                        version);
+
+                validation.setFieldName(
+                        excelField);
+
+                validation.setExpectedValue(
+                        expected);
+
+                validation.setActualValue(
+                        actual);
+
+                validation.setWorkbookFile(
+                        workbookName);
+
+                validation.setJsonFile(
+                        jsonName);
+
+                /*
+                 * =====================================
+                 * FINAL COMPARISON
+                 * =====================================
+                 */
+
+                if (expected.equalsIgnoreCase(
+                        actual)) {
+
+                    validation.setStatus(
+                            "PASS");
+
+                } else {
+
+                    validation.setStatus(
+                            "FAIL");
+                }
+
+                ResultStore.results.add(
+                        validation);
+            }
+
+            /*
+             * =====================================
+             * STORE CURRENT VERSION
+             * =====================================
+             */
+
+            previousFields = fields;
+        }
+    }
+
+    /*
+     * =====================================
+     * HANDLE ARRAY RESULTS
+     * =====================================
+     */
+
+    private static String extractValue(
+            Object result) {
+
+        if (result == null)
+            return "";
+
+        if (result instanceof List) {
+
+            List<?> list =
+                    (List<?>) result;
+
+            /*
+             * TAKE FIRST MATCH ONLY
+             */
+
+            if (list.isEmpty())
+                return "";
+
+            return list.get(0)
+                    .toString();
+        }
+
+        return result.toString();
+    }
+
+    /*
+     * =====================================
+     * NORMALIZATION
+     * =====================================
+     */
+
+    private static String normalize(
+            String value) {
+
+        if (value == null)
+            return "";
+
+        value = value.trim();
+
+        value = value.replace(
+                ".0",
+                "");
+
+        value = value.replace(
+                "T00:00:00Z",
+                "");
+
+        return value;
+    }
+}
