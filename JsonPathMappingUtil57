@@ -1,0 +1,46 @@
+package utilities;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class JsonPathMappingUtil {
+
+    public static Map<String, String>
+    getMappings() {
+
+        Map<String, String> map =
+                new HashMap<>();
+
+        map.put("PACS ID",
+                "$.policyNumber");
+
+        map.put("Policy Number",
+                "$.policyNumber");
+
+        map.put("Version",
+                "$.version");
+
+        map.put("Product",
+                "$.productCode");
+
+        map.put("Class Number",
+                "$.plans[*].coverages[*].classes[*].classNumber");
+
+        map.put("Description",
+                "$.plans[*].coverages[*].classes[*].classDescription");
+
+        map.put("Coverage Code",
+                "$.plans[*].coverages[*].coverageCode");
+
+        map.put("Child Care Benefit",
+                "$.plans[*].coverages[*].benefitStructure.extendedAttributes[?(@.name=='childCareBenefit')].value");
+
+        map.put("Pilot",
+                "$.plans[*].coverages[*].benefitStructure.extendedAttributes[?(@.name=='pilot')].value");
+
+        map.put("EOI Code",
+                "$.plans[*].coverages[*].benefitStructure.extendedAttributes[?(@.name=='eoiCd')].value");
+
+        return map;
+    }
+}
