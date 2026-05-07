@@ -1,0 +1,150 @@
+package utilities;
+
+import com.jayway.jsonpath.JsonPath;
+
+import java.util.List;
+import java.util.Map;
+
+public class CompareUtil {
+
+    public static void compare(
+            Map<String,
+                    Map<String, String>> excelData,
+
+            Map<String, String> jsonVersions) {
+
+        Map<String, String> mappings =
+                JsonPathMappingUtil.getMappings();
+
+        for (String version :
+                excelData.keySet()) {
+
+            System.out.println(
+                    "\n===================================");
+
+            System.out.println(
+                    "VALIDATING VERSION : "
+                            + version);
+
+            System.out.println(
+                    "===================================");
+
+            String json =
+                    jsonVersions.get(version);
+
+            if (json == null) {
+
+                System.out.println(
+                        "JSON VERSION NOT FOUND");
+
+                continue;
+            }
+
+            Map<String, String> fields =
+                    excelData.get(version);
+
+            for (String excelField :
+                    fields.keySet()) {
+
+                String expected =
+                        normalize(
+                                fields.get(excelField));
+
+                String jsonPath =
+                        mappings.get(excelField);
+
+                if (jsonPath == null) {
+
+                    System.out.println(
+                            "NO MAPPING : "
+                                    + excelField);
+
+                    continue;
+                }
+
+                try {
+
+                    Object result =
+                            JsonPath.read(json,
+                                    jsonPath);
+
+                    String actual =
+                            extractValue(result);
+
+                    actual =
+                            normalize(actual);
+
+                    if (expected.equalsIgnoreCase(
+                            actual)) {
+
+                        System.out.println(
+                                "PASS : "
+                                        + excelField
+                                        + " -> "
+                                        + expected);
+
+                    } else {
+
+                        System.out.println(
+                                "FAIL : "
+                                        + excelField
+                                        + " | EXCEL = "
+                                        + expected
+                                        + " | JSON = "
+                                        + actual);
+                    }
+
+                } catch (Exception e) {
+
+                    System.out.println(
+                            "JSONPATH ERROR : "
+                                    + excelField);
+                }
+            }
+        }
+    }
+
+    /*
+     * HANDLE ARRAYS
+     */
+
+    private static String extractValue(
+            Object result) {
+
+        if (result == null)
+            return "";
+
+        if (result instanceof List) {
+
+            List<?> list =
+                    (List<?>) result;
+
+            if (list.isEmpty())
+                return "";
+
+            return list.get(0).toString();
+        }
+
+        return result.toString();
+    }
+
+    /*
+     * NORMALIZATION
+     */
+
+    private static String normalize(
+            String value) {
+
+        if (value == null)
+            return "";
+
+        value = value.trim();
+
+        value = value.replace(".0", "");
+
+        value = value.replace(
+                "T00:00:00Z", "");
+
+        return value;
+    }
+}
