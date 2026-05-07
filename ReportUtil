@@ -1,0 +1,85 @@
+package utilities;
+
+import model.ValidationResult;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.FileOutputStream;
+
+public class ReportUtil {
+
+    public static void generateReport()
+            throws Exception {
+
+        Workbook workbook =
+                new XSSFWorkbook();
+
+        Sheet sheet =
+                workbook.createSheet(
+                        "Validation Report");
+
+        Row header =
+                sheet.createRow(0);
+
+        header.createCell(0)
+                .setCellValue("Policy");
+
+        header.createCell(1)
+                .setCellValue("Version");
+
+        header.createCell(2)
+                .setCellValue("Field");
+
+        header.createCell(3)
+                .setCellValue("Expected");
+
+        header.createCell(4)
+                .setCellValue("Actual");
+
+        header.createCell(5)
+                .setCellValue("Status");
+
+        int rowNum = 1;
+
+        for (ValidationResult result :
+                ResultStore.results) {
+
+            Row row =
+                    sheet.createRow(rowNum++);
+
+            row.createCell(0)
+                    .setCellValue(
+                            result.getPolicyNumber());
+
+            row.createCell(1)
+                    .setCellValue(
+                            result.getVersion());
+
+            row.createCell(2)
+                    .setCellValue(
+                            result.getFieldName());
+
+            row.createCell(3)
+                    .setCellValue(
+                            result.getExpectedValue());
+
+            row.createCell(4)
+                    .setCellValue(
+                            result.getActualValue());
+
+            row.createCell(5)
+                    .setCellValue(
+                            result.getStatus());
+        }
+
+        FileOutputStream fos =
+                new FileOutputStream(
+                        "target/ValidationReport.xlsx");
+
+        workbook.write(fos);
+
+        workbook.close();
+
+        fos.close();
+    }
+}
