@@ -1,0 +1,14 @@
+package stepdefinitions;
+
+import io.cucumber.java.en.Then;
+import utilities.PolicyComparisonManager;
+
+public class PolicyValidationSteps {
+
+    @Then("validate all policies")
+    public void validatePolicies()
+            throws Exception {
+
+        PolicyComparisonManager.execute();
+    }
+}
