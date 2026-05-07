@@ -1,0 +1,142 @@
+package utilities;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class JsonPathMappingUtil {
+
+    public static Map<String, String>
+    getMappings() {
+
+        Map<String, String> map =
+                new HashMap<>();
+
+        /*
+         * =====================================
+         * POLICY LEVEL
+         * =====================================
+         */
+
+        map.put("PACS ID",
+                "$.policyNumber");
+
+        map.put("Policy Number",
+                "$.policyNumber");
+
+        map.put("Version",
+                "$.version");
+
+        map.put("Policy Source",
+                "$.policySource");
+
+        map.put("Product",
+                "$.productCode");
+
+        map.put("Claim Distribution",
+                "$.claimDistribution");
+
+        map.put("Initial Deposit Amount",
+                "$.initialDepositAmount");
+
+        map.put("Administered By",
+                "$.administratedBy");
+
+        map.put("Inception Date",
+                "$.inceptionDate");
+
+        map.put("Buy Up Volume",
+                "$.buyUpVolume");
+
+        map.put("Grace Period",
+                "$.gracePeriod");
+
+        map.put("Contract State",
+                "$.contractStateCode");
+
+        map.put("Country",
+                "$.country");
+
+        map.put("Currency Code",
+                "$.currencyCode");
+
+
+        /*
+         * =====================================
+         * CLASS LEVEL
+         * =====================================
+         */
+
+        map.put("Class Number",
+                "$.plans[*].coverages[*].classes[*].classNumber");
+
+        map.put("Class Name",
+                "$.plans[*].coverages[*].classes[*].classDescription");
+
+        map.put("Description",
+                "$.plans[*].coverages[*].classes[*].classDescription");
+
+        map.put("Full Time Hours",
+                "$.plans[*].coverages[*].classes[*].fullTimeHours");
+
+        map.put("Part Time Hours",
+                "$.plans[*].coverages[*].classes[*].partTimeHours");
+
+
+        /*
+         * =====================================
+         * COVERAGE LEVEL
+         * =====================================
+         */
+
+        map.put("Coverage Code",
+                "$.plans[*].coverages[*].coverageCode");
+
+        map.put("Coverage Type",
+                "$.plans[*].coverages[*].coverageType");
+
+        map.put("Benefit Type",
+                "$.plans[*].coverages[*].benefitStructure.benefitTypeCode");
+
+        map.put("Elimination Period",
+                "$.plans[*].coverages[*].benefitStructure.eliminationPeriod");
+
+
+        /*
+         * =====================================
+         * EXTENDED ATTRIBUTES
+         * =====================================
+         */
+
+        map.put("Child Care Benefit",
+                "$.plans[*].coverages[*].benefitStructure.extendedAttributes[?(@.name=='childCareBenefit')].value");
+
+        map.put("Child Care Age Limit",
+                "$.plans[*].coverages[*].benefitStructure.extendedAttributes[?(@.name=='childCareAgeLimit')].value");
+
+        map.put("Pilot",
+                "$.plans[*].coverages[*].benefitStructure.extendedAttributes[?(@.name=='pilot')].value");
+
+        map.put("EOI Code",
+                "$.plans[*].coverages[*].benefitStructure.extendedAttributes[?(@.name=='eoiCd')].value");
+
+        map.put("Specific Indemnity",
+                "$.plans[*].coverages[*].benefitStructure.extendedAttributes[?(@.name=='specificIndemnity')].value");
+
+        map.put("Residual Disability",
+                "$.plans[*].coverages[*].benefitStructure.extendedAttributes[?(@.name=='isResidualDisability')].value");
+
+        map.put("Partial Disability Included",
+                "$.plans[*].coverages[*].benefitStructure.extendedAttributes[?(@.name=='isPartialDisabilityIncluded')].value");
+
+        map.put("Worksite Benefit",
+                "$.plans[*].coverages[*].benefitStructure.extendedAttributes[?(@.name=='worksiteBenefit')].value");
+
+        map.put("Drug And Alcohol Limitation",
+                "$.plans[*].coverages[*].benefitStructure.extendedAttributes[?(@.name=='drugAndAlcoholLimitation')].value");
+
+        map.put("Mental And Nervous Limitation",
+                "$.plans[*].coverages[*].benefitStructure.extendedAttributes[?(@.name=='mentalAndNervousLimitation')].value");
+
+        return map;
+    }
+}
