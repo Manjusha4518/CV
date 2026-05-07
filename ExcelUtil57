@@ -1,0 +1,80 @@
+package utilities;
+
+import org.apache.poi.ss.usermodel.*;
+
+import java.io.FileInputStream;
+import java.util.*;
+
+public class ExcelUtil {
+
+    public static Map<String,
+            Map<String, String>> readWorkbook(String path)
+            throws Exception {
+
+        Map<String,
+                Map<String, String>> workbookData =
+                new LinkedHashMap<>();
+
+        FileInputStream fis =
+                new FileInputStream(path);
+
+        Workbook workbook =
+                WorkbookFactory.create(fis);
+
+        for (Sheet sheet : workbook) {
+
+            String version =
+                    extractVersion(sheet.getSheetName());
+
+            Map<String, String> fields =
+                    new LinkedHashMap<>();
+
+            for (int i = 1;
+                 i <= sheet.getLastRowNum();
+                 i++) {
+
+                Row row = sheet.getRow(i);
+
+                if (row == null)
+                    continue;
+
+                Cell fieldCell = row.getCell(1);
+                Cell valueCell = row.getCell(2);
+
+                if (fieldCell == null
+                        || valueCell == null)
+                    continue;
+
+                String field =
+                        fieldCell.toString().trim();
+
+                String value =
+                        valueCell.toString().trim();
+
+                if (!field.isEmpty()) {
+
+                    fields.put(field, value);
+                }
+            }
+
+            workbookData.put(version, fields);
+        }
+
+        workbook.close();
+
+        return workbookData;
+    }
+
+    private static String extractVersion(
+            String sheetName) {
+
+        /*
+         * 108868-42.0 -> 42
+         */
+
+        return sheetName
+                .split("-")[1]
+                .replace(".0", "")
+                .trim();
+    }
+}
