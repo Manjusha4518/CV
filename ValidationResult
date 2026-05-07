@@ -1,0 +1,100 @@
+package model;
+
+public class ValidationResult {
+
+    private String policyNumber;
+
+    private String version;
+
+    private String fieldName;
+
+    private String expectedValue;
+
+    private String actualValue;
+
+    private String status;
+
+    private String workbookFile;
+
+    private String jsonFile;
+
+    /*
+     * GETTERS AND SETTERS
+     */
+
+    public String getPolicyNumber() {
+        return policyNumber;
+    }
+
+    public void setPolicyNumber(
+            String policyNumber) {
+
+        this.policyNumber = policyNumber;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public String getFieldName() {
+        return fieldName;
+    }
+
+    public void setFieldName(
+            String fieldName) {
+
+        this.fieldName = fieldName;
+    }
+
+    public String getExpectedValue() {
+        return expectedValue;
+    }
+
+    public void setExpectedValue(
+            String expectedValue) {
+
+        this.expectedValue = expectedValue;
+    }
+
+    public String getActualValue() {
+        return actualValue;
+    }
+
+    public void setActualValue(
+            String actualValue) {
+
+        this.actualValue = actualValue;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getWorkbookFile() {
+        return workbookFile;
+    }
+
+    public void setWorkbookFile(
+            String workbookFile) {
+
+        this.workbookFile = workbookFile;
+    }
+
+    public String getJsonFile() {
+        return jsonFile;
+    }
+
+    public void setJsonFile(
+            String jsonFile) {
+
+        this.jsonFile = jsonFile;
+    }
+}
