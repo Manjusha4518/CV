@@ -24,12 +24,6 @@ public class CompareUtil {
         Map<String, String> mappings =
                 JsonPathMappingUtil.getMappings();
 
-        /*
-         * =====================================
-         * PREVIOUS VERSION STORE
-         * =====================================
-         */
-
         Map<String, String> previousFields =
                 null;
 
@@ -48,7 +42,7 @@ public class CompareUtil {
             if (json == null) {
 
                 System.out.println(
-                        "JSON NOT FOUND FOR VERSION : "
+                        "JSON NOT FOUND : "
                                 + version);
 
                 continue;
@@ -65,52 +59,44 @@ public class CompareUtil {
 
             if (previousFields != null) {
 
-                /*
-                 * MISSING FIELDS
-                 */
-
                 for (String previousField :
                         previousFields.keySet()) {
 
                     if (!fields.containsKey(
                             previousField)) {
 
-                        ValidationResult validation =
+                        ValidationResult vr =
                                 new ValidationResult();
 
-                        validation.setPolicyNumber(
+                        vr.setPolicyNumber(
                                 policyNumber);
 
-                        validation.setVersion(
+                        vr.setVersion(
                                 version);
 
-                        validation.setFieldName(
+                        vr.setFieldName(
                                 previousField);
 
-                        validation.setExpectedValue(
+                        vr.setExpectedValue(
                                 previousFields.get(
                                         previousField));
 
-                        validation.setActualValue(
+                        vr.setActualValue(
                                 "FIELD NOT PRESENT");
 
-                        validation.setStatus(
+                        vr.setStatus(
                                 "MISSING_IN_CURRENT_VERSION");
 
-                        validation.setWorkbookFile(
+                        vr.setWorkbookFile(
                                 workbookName);
 
-                        validation.setJsonFile(
+                        vr.setJsonFile(
                                 jsonName);
 
                         ResultStore.results.add(
-                                validation);
+                                vr);
                     }
                 }
-
-                /*
-                 * NEW FIELDS
-                 */
 
                 for (String currentField :
                         fields.keySet()) {
@@ -118,36 +104,36 @@ public class CompareUtil {
                     if (!previousFields.containsKey(
                             currentField)) {
 
-                        ValidationResult validation =
+                        ValidationResult vr =
                                 new ValidationResult();
 
-                        validation.setPolicyNumber(
+                        vr.setPolicyNumber(
                                 policyNumber);
 
-                        validation.setVersion(
+                        vr.setVersion(
                                 version);
 
-                        validation.setFieldName(
+                        vr.setFieldName(
                                 currentField);
 
-                        validation.setExpectedValue(
+                        vr.setExpectedValue(
                                 "FIELD NOT IN PREVIOUS VERSION");
 
-                        validation.setActualValue(
+                        vr.setActualValue(
                                 fields.get(
                                         currentField));
 
-                        validation.setStatus(
+                        vr.setStatus(
                                 "NEW_FIELD_IN_CURRENT_VERSION");
 
-                        validation.setWorkbookFile(
+                        vr.setWorkbookFile(
                                 workbookName);
 
-                        validation.setJsonFile(
+                        vr.setJsonFile(
                                 jsonName);
 
                         ResultStore.results.add(
-                                validation);
+                                vr);
                     }
                 }
             }
@@ -178,18 +164,11 @@ public class CompareUtil {
                     getFieldValue(
                             fields,
                             "Benefit Type",
-                            "Benefit",
-                            "BenefitType");
-
-            String planCode =
-                    getFieldValue(
-                            fields,
-                            "Plan Code",
-                            "Plan");
+                            "Benefit");
 
             /*
              * =====================================
-             * LOOP ALL FIELDS
+             * LOOP EXCEL FIELDS
              * =====================================
              */
 
@@ -203,15 +182,15 @@ public class CompareUtil {
 
                 /*
                  * =====================================
-                 * NORMALIZED MAPPING SEARCH
+                 * FIND MAPPING
                  * =====================================
                  */
+
+                String jsonPath = null;
 
                 String normalizedField =
                         normalizeKey(
                                 excelField);
-
-                String jsonPath = null;
 
                 for (String mapKey :
                         mappings.keySet()) {
@@ -241,8 +220,7 @@ public class CompareUtil {
                         .equals(jsonPath)) {
 
                     jsonPath =
-                            "$.plans[*]"
-                            + ".coverages"
+                            "$..coverages"
                             + "[?(@.coverageCode=='"
                             + coverageCode
                             + "')]"
@@ -257,8 +235,7 @@ public class CompareUtil {
                         .equals(jsonPath)) {
 
                     jsonPath =
-                            "$.plans[*]"
-                            + ".coverages"
+                            "$..coverages"
                             + "[?(@.coverageCode=='"
                             + coverageCode
                             + "')]"
@@ -273,8 +250,7 @@ public class CompareUtil {
                         .equals(jsonPath)) {
 
                     jsonPath =
-                            "$.plans[*]"
-                            + ".coverages"
+                            "$..coverages"
                             + "[?(@.coverageCode=='"
                             + coverageCode
                             + "')]"
@@ -289,8 +265,7 @@ public class CompareUtil {
                         .equals(jsonPath)) {
 
                     jsonPath =
-                            "$.plans[*]"
-                            + ".coverages"
+                            "$..coverages"
                             + "[?(@.coverageCode=='"
                             + coverageCode
                             + "')]"
@@ -305,8 +280,7 @@ public class CompareUtil {
                         .equals(jsonPath)) {
 
                     jsonPath =
-                            "$.plans[*]"
-                            + ".coverages"
+                            "$..coverages"
                             + "[?(@.coverageCode=='"
                             + coverageCode
                             + "')]"
@@ -317,8 +291,7 @@ public class CompareUtil {
                         .equals(jsonPath)) {
 
                     jsonPath =
-                            "$.plans[*]"
-                            + ".coverages"
+                            "$..coverages"
                             + "[?(@.coverageCode=='"
                             + coverageCode
                             + "')]"
@@ -329,8 +302,7 @@ public class CompareUtil {
                         .equals(jsonPath)) {
 
                     jsonPath =
-                            "$.plans[*]"
-                            + ".coverages"
+                            "$..coverages"
                             + "[?(@.coverageCode=='"
                             + coverageCode
                             + "')]"
@@ -341,8 +313,7 @@ public class CompareUtil {
                         .equals(jsonPath)) {
 
                     jsonPath =
-                            "$.plans[*]"
-                            + ".coverages"
+                            "$..coverages"
                             + "[?(@.coverageCode=='"
                             + coverageCode
                             + "')]"
@@ -354,8 +325,7 @@ public class CompareUtil {
                         .equals(jsonPath)) {
 
                     jsonPath =
-                            "$.plans[*]"
-                            + ".coverages"
+                            "$..coverages"
                             + "[?(@.coverageCode=='"
                             + coverageCode
                             + "')]"
@@ -367,8 +337,7 @@ public class CompareUtil {
                         .equals(jsonPath)) {
 
                     jsonPath =
-                            "$.plans[*]"
-                            + ".coverages"
+                            "$..coverages"
                             + "[?(@.coverageCode=='"
                             + coverageCode
                             + "')]"
@@ -380,8 +349,7 @@ public class CompareUtil {
                         .equals(jsonPath)) {
 
                     jsonPath =
-                            "$.plans[*]"
-                            + ".coverages"
+                            "$..coverages"
                             + "[?(@.coverageCode=='"
                             + coverageCode
                             + "')]"
@@ -393,8 +361,7 @@ public class CompareUtil {
                         .equals(jsonPath)) {
 
                     jsonPath =
-                            "$.plans[*]"
-                            + ".coverages"
+                            "$..coverages"
                             + "[?(@.coverageCode=='"
                             + coverageCode
                             + "')]"
@@ -406,8 +373,7 @@ public class CompareUtil {
                         .equals(jsonPath)) {
 
                     jsonPath =
-                            "$.plans[*]"
-                            + ".coverages"
+                            "$..coverages"
                             + "[?(@.coverageCode=='"
                             + coverageCode
                             + "')]"
@@ -419,8 +385,7 @@ public class CompareUtil {
                         .equals(jsonPath)) {
 
                     jsonPath =
-                            "$.plans[*]"
-                            + ".coverages"
+                            "$..coverages"
                             + "[?(@.coverageCode=='"
                             + coverageCode
                             + "')]"
@@ -434,8 +399,7 @@ public class CompareUtil {
                         .equals(jsonPath)) {
 
                     jsonPath =
-                            "$.plans[*]"
-                            + ".coverages"
+                            "$..coverages"
                             + "[?(@.coverageCode=='"
                             + coverageCode
                             + "')]"
@@ -449,8 +413,7 @@ public class CompareUtil {
                         .equals(jsonPath)) {
 
                     jsonPath =
-                            "$.plans[*]"
-                            + ".coverages"
+                            "$..coverages"
                             + "[?(@.coverageCode=='"
                             + coverageCode
                             + "')]"
@@ -468,42 +431,42 @@ public class CompareUtil {
 
                 if (jsonPath == null) {
 
-                    ValidationResult validation =
+                    ValidationResult vr =
                             new ValidationResult();
 
-                    validation.setPolicyNumber(
+                    vr.setPolicyNumber(
                             policyNumber);
 
-                    validation.setVersion(
+                    vr.setVersion(
                             version);
 
-                    validation.setFieldName(
+                    vr.setFieldName(
                             excelField);
 
-                    validation.setExpectedValue(
+                    vr.setExpectedValue(
                             expected);
 
-                    validation.setActualValue(
+                    vr.setActualValue(
                             "MAPPING NOT FOUND");
 
-                    validation.setStatus(
+                    vr.setStatus(
                             "NO_MAPPING");
 
-                    validation.setWorkbookFile(
+                    vr.setWorkbookFile(
                             workbookName);
 
-                    validation.setJsonFile(
+                    vr.setJsonFile(
                             jsonName);
 
                     ResultStore.results.add(
-                            validation);
+                            vr);
 
                     continue;
                 }
 
                 /*
                  * =====================================
-                 * READ JSON VALUE
+                 * READ JSON
                  * =====================================
                  */
 
@@ -525,36 +488,47 @@ public class CompareUtil {
 
                     actual =
                             "JSONPATH ERROR";
+
+                    System.out.println(
+                            "ERROR FIELD : "
+                                    + excelField);
+
+                    System.out.println(
+                            "JSONPATH : "
+                                    + jsonPath);
+
+                    System.out.println(
+                            e.getMessage());
                 }
 
                 /*
                  * =====================================
-                 * RESULT OBJECT
+                 * CREATE RESULT
                  * =====================================
                  */
 
-                ValidationResult validation =
+                ValidationResult vr =
                         new ValidationResult();
 
-                validation.setPolicyNumber(
+                vr.setPolicyNumber(
                         policyNumber);
 
-                validation.setVersion(
+                vr.setVersion(
                         version);
 
-                validation.setFieldName(
+                vr.setFieldName(
                         excelField);
 
-                validation.setExpectedValue(
+                vr.setExpectedValue(
                         expected);
 
-                validation.setActualValue(
+                vr.setActualValue(
                         actual);
 
-                validation.setWorkbookFile(
+                vr.setWorkbookFile(
                         workbookName);
 
-                validation.setJsonFile(
+                vr.setJsonFile(
                         jsonName);
 
                 /*
@@ -566,24 +540,18 @@ public class CompareUtil {
                 if (expected.equalsIgnoreCase(
                         actual)) {
 
-                    validation.setStatus(
+                    vr.setStatus(
                             "PASS");
 
                 } else {
 
-                    validation.setStatus(
+                    vr.setStatus(
                             "FAIL");
                 }
 
                 ResultStore.results.add(
-                        validation);
+                        vr);
             }
-
-            /*
-             * =====================================
-             * STORE CURRENT VERSION
-             * =====================================
-             */
 
             previousFields = fields;
         }
@@ -591,7 +559,7 @@ public class CompareUtil {
 
     /*
      * =====================================
-     * EXTRACT LIST VALUES
+     * EXTRACT VALUES
      * =====================================
      */
 
@@ -618,7 +586,7 @@ public class CompareUtil {
 
     /*
      * =====================================
-     * NORMALIZE VALUES
+     * NORMALIZE VALUE
      * =====================================
      */
 
@@ -643,7 +611,7 @@ public class CompareUtil {
 
     /*
      * =====================================
-     * NORMALIZE FIELD NAMES
+     * NORMALIZE FIELD NAME
      * =====================================
      */
 
@@ -660,7 +628,7 @@ public class CompareUtil {
 
     /*
      * =====================================
-     * FLEXIBLE FIELD FETCH
+     * FLEXIBLE FIELD EXTRACTION
      * =====================================
      */
 
