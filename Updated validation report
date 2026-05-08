@@ -1,0 +1,305 @@
+package utilities;
+
+import model.ValidationResult;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.FileOutputStream;
+import java.util.*;
+import java.util.stream.Collectors;
+
+public class ReportUtil {
+
+    public static void generateReport()
+            throws Exception {
+
+        Workbook workbook =
+                new XSSFWorkbook();
+
+        /*
+         * =====================================
+         * GROUP RESULTS BY POLICY
+         * =====================================
+         */
+
+        Map<String,
+                List<ValidationResult>>
+                groupedResults =
+                ResultStore.results
+                        .stream()
+                        .collect(
+                                Collectors.groupingBy(
+                                        ValidationResult
+                                                ::getPolicyNumber));
+
+        /*
+         * =====================================
+         * CREATE SHEET PER POLICY
+         * =====================================
+         */
+
+        for (String policy :
+                groupedResults.keySet()) {
+
+            List<ValidationResult>
+                    policyResults =
+                    groupedResults.get(
+                            policy);
+
+            Sheet sheet =
+                    workbook.createSheet(
+                            "Policy_" + policy);
+
+            /*
+             * =====================================
+             * SUMMARY COUNTS
+             * =====================================
+             */
+
+            int totalValidated =
+                    policyResults.size();
+
+            int totalPass = 0;
+
+            int totalFail = 0;
+
+            int totalNoMapping = 0;
+
+            int totalMissing = 0;
+
+            int totalNewFields = 0;
+
+            for (ValidationResult result :
+                    policyResults) {
+
+                String status =
+                        result.getStatus();
+
+                if (status.equalsIgnoreCase(
+                        "PASS")) {
+
+                    totalPass++;
+                }
+
+                else if (status.equalsIgnoreCase(
+                        "FAIL")) {
+
+                    totalFail++;
+                }
+
+                else if (status.equalsIgnoreCase(
+                        "NO_MAPPING")) {
+
+                    totalNoMapping++;
+                }
+
+                else if (status.equalsIgnoreCase(
+                        "MISSING_IN_CURRENT_VERSION")) {
+
+                    totalMissing++;
+                }
+
+                else if (status.equalsIgnoreCase(
+                        "NEW_FIELD_IN_CURRENT_VERSION")) {
+
+                    totalNewFields++;
+                }
+            }
+
+            /*
+             * =====================================
+             * SUMMARY SECTION
+             * =====================================
+             */
+
+            Row s1 =
+                    sheet.createRow(0);
+
+            s1.createCell(0)
+                    .setCellValue(
+                            "Total Fields Validated");
+
+            s1.createCell(1)
+                    .setCellValue(
+                            totalValidated);
+
+            Row s2 =
+                    sheet.createRow(1);
+
+            s2.createCell(0)
+                    .setCellValue(
+                            "PASS");
+
+            s2.createCell(1)
+                    .setCellValue(
+                            totalPass);
+
+            Row s3 =
+                    sheet.createRow(2);
+
+            s3.createCell(0)
+                    .setCellValue(
+                            "FAIL");
+
+            s3.createCell(1)
+                    .setCellValue(
+                            totalFail);
+
+            Row s4 =
+                    sheet.createRow(3);
+
+            s4.createCell(0)
+                    .setCellValue(
+                            "NO_MAPPING");
+
+            s4.createCell(1)
+                    .setCellValue(
+                            totalNoMapping);
+
+            Row s5 =
+                    sheet.createRow(4);
+
+            s5.createCell(0)
+                    .setCellValue(
+                            "MISSING FIELDS");
+
+            s5.createCell(1)
+                    .setCellValue(
+                            totalMissing);
+
+            Row s6 =
+                    sheet.createRow(5);
+
+            s6.createCell(0)
+                    .setCellValue(
+                            "NEW FIELDS");
+
+            s6.createCell(1)
+                    .setCellValue(
+                            totalNewFields);
+
+            /*
+             * =====================================
+             * HEADER
+             * =====================================
+             */
+
+            int startRow = 8;
+
+            Row header =
+                    sheet.createRow(startRow);
+
+            header.createCell(0)
+                    .setCellValue(
+                            "Policy");
+
+            header.createCell(1)
+                    .setCellValue(
+                            "Version");
+
+            header.createCell(2)
+                    .setCellValue(
+                            "Field");
+
+            header.createCell(3)
+                    .setCellValue(
+                            "Expected");
+
+            header.createCell(4)
+                    .setCellValue(
+                            "Actual");
+
+            header.createCell(5)
+                    .setCellValue(
+                            "Status");
+
+            header.createCell(6)
+                    .setCellValue(
+                            "Workbook");
+
+            header.createCell(7)
+                    .setCellValue(
+                            "JSON");
+
+            /*
+             * =====================================
+             * DETAIL ROWS
+             * =====================================
+             */
+
+            int rowNum = startRow + 1;
+
+            for (ValidationResult result :
+                    policyResults) {
+
+                Row row =
+                        sheet.createRow(
+                                rowNum++);
+
+                row.createCell(0)
+                        .setCellValue(
+                                result.getPolicyNumber());
+
+                row.createCell(1)
+                        .setCellValue(
+                                result.getVersion());
+
+                row.createCell(2)
+                        .setCellValue(
+                                result.getFieldName());
+
+                row.createCell(3)
+                        .setCellValue(
+                                result.getExpectedValue());
+
+                row.createCell(4)
+                        .setCellValue(
+                                result.getActualValue());
+
+                row.createCell(5)
+                        .setCellValue(
+                                result.getStatus());
+
+                row.createCell(6)
+                        .setCellValue(
+                                result.getWorkbookFile());
+
+                row.createCell(7)
+                        .setCellValue(
+                                result.getJsonFile());
+            }
+
+            /*
+             * =====================================
+             * AUTO SIZE
+             * =====================================
+             */
+
+            for (int i = 0; i < 8; i++) {
+
+                sheet.autoSizeColumn(i);
+            }
+        }
+
+        /*
+         * =====================================
+         * WRITE REPORT
+         * =====================================
+         */
+
+        FileOutputStream fos =
+                new FileOutputStream(
+                        "target/ValidationReport.xlsx");
+
+        workbook.write(fos);
+
+        workbook.close();
+
+        fos.close();
+
+        System.out.println(
+                "VALIDATION REPORT GENERATED");
+    }
+}
