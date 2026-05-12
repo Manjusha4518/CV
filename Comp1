@@ -1,0 +1,1094 @@
+package utilities;
+
+import com.jayway.jsonpath.JsonPath;
+import model.ValidationResult;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+
+public class CompareUtil {
+
+    public static void compare(
+
+            Map<String,
+                    Map<String, String>> excelData,
+
+            Map<String, String> jsonVersions,
+
+            String workbookName,
+
+            String jsonName,
+
+            String policyNumber) {
+
+        Map<String, String> mappings =
+                JsonPathMappingUtil.getMappings();
+
+        Map<String, String> previousFields =
+                null;
+
+        /*
+         * =========================================
+         * LOOP ALL VERSIONS
+         * =========================================
+         */
+
+        for (String version :
+                excelData.keySet()) {
+
+            String json =
+                    jsonVersions.get(version);
+
+            if (json == null) {
+
+                System.out.println(
+                        "JSON NOT FOUND : "
+                                + version);
+
+                continue;
+            }
+
+            Map<String, String> fields =
+                    excelData.get(version);
+
+            /*
+             * =========================================
+             * MISSING / NEW FIELD CHECK
+             * =========================================
+             */
+
+            if (previousFields != null) {
+
+                checkMissingFields(
+                        previousFields,
+                        fields,
+                        version,
+                        workbookName,
+                        jsonName,
+                        policyNumber);
+            }
+
+            /*
+             * =========================================
+             * CONTEXT VALUES
+             * =========================================
+             */
+
+            String classNumber =
+                    getFieldValue(
+                            fields,
+                            "classnumber",
+                            "classnum",
+                            "classno",
+                            "class");
+
+            String coverageCode =
+                    getFieldValue(
+                            fields,
+                            "coveragecode",
+                            "coverage");
+
+            /*
+             * =========================================
+             * LOOP EXCEL FIELDS
+             * =========================================
+             */
+
+            for (String excelField :
+                    fields.keySet()) {
+
+                String expected =
+                        normalize(
+                                fields.get(
+                                        excelField));
+
+                String normalizedField =
+                        normalizeKey(
+                                excelField);
+
+                String actual = "";
+
+                String jsonPath = null;
+
+                /*
+                 * =====================================
+                 * PACS ID
+                 * =====================================
+                 */
+
+                if (normalizedField.contains(
+                        "pacsid")) {
+
+                    actual =
+                            getMatchingValue(
+                                    json,
+                                    "$..pacsId",
+                                    expected);
+                }
+
+                /*
+                 * =====================================
+                 * CLASS NUMBER
+                 * =====================================
+                 */
+
+                else if (normalizedField.contains(
+                        "classnumber")
+
+                        ||
+
+                        normalizedField.contains(
+                                "classnum")
+
+                        ||
+
+                        normalizedField.contains(
+                                "classno")
+
+                        ||
+
+                        normalizedField.equals(
+                                "class")) {
+
+                    actual =
+                            getMatchingValue(
+                                    json,
+                                    "$..classes[*].classNumber",
+                                    expected);
+                }
+
+                /*
+                 * =====================================
+                 * CLASS DESCRIPTION
+                 * =====================================
+                 */
+
+                else if (normalizedField.contains(
+                        "classdescription")
+
+                        ||
+
+                        normalizedField.contains(
+                                "classname")) {
+
+                    actual =
+                            getClassFieldValue(
+                                    json,
+                                    classNumber,
+                                    "classDescription");
+                }
+
+                /*
+                 * =====================================
+                 * FULL TIME HOURS
+                 * =====================================
+                 */
+
+                else if (normalizedField.contains(
+                        "fulltimehours")) {
+
+                    actual =
+                            getClassFieldValue(
+                                    json,
+                                    classNumber,
+                                    "fullTimeHours");
+                }
+
+                /*
+                 * =====================================
+                 * PART TIME HOURS
+                 * =====================================
+                 */
+
+                else if (normalizedField.contains(
+                        "parttimehours")) {
+
+                    actual =
+                            getClassFieldValue(
+                                    json,
+                                    classNumber,
+                                    "partTimeHours");
+                }
+
+                /*
+                 * =====================================
+                 * COVERAGE CODE
+                 * =====================================
+                 */
+
+                else if (normalizedField.contains(
+                        "coveragecode")) {
+
+                    actual =
+                            getMatchingValue(
+                                    json,
+                                    "$..coverages[*].coverageCode",
+                                    expected);
+                }
+
+                /*
+                 * =====================================
+                 * COVERAGE TYPE
+                 * =====================================
+                 */
+
+                else if (normalizedField.contains(
+                        "coveragetype")) {
+
+                    actual =
+                            getCoverageFieldValue(
+                                    json,
+                                    coverageCode,
+                                    "coverageType");
+                }
+
+                /*
+                 * =====================================
+                 * BENEFIT AMOUNT
+                 * =====================================
+                 */
+
+                else if (normalizedField.contains(
+                        "benefitamount")) {
+
+                    actual =
+                            getCoverageFieldValue(
+                                    json,
+                                    coverageCode,
+                                    "benefitAmount");
+                }
+
+                /*
+                 * =====================================
+                 * BENEFIT STRUCTURE
+                 * =====================================
+                 */
+
+                else if (normalizedField.contains(
+                        "benefittype")) {
+
+                    jsonPath =
+                            "$..benefitStructure.benefitTypeCode";
+                }
+
+                else if (normalizedField.contains(
+                        "benefitpercent")) {
+
+                    jsonPath =
+                            "$..benefitStructure.benefitPercent";
+                }
+
+                else if (normalizedField.contains(
+                        "maximumbenefit")) {
+
+                    jsonPath =
+                            "$..benefitStructure.maximumBenefit";
+                }
+
+                else if (normalizedField.contains(
+                        "minimumbenefit")) {
+
+                    jsonPath =
+                            "$..benefitStructure.minimumBenefit";
+                }
+
+                else if (normalizedField.contains(
+                        "eliminationperiod")) {
+
+                    jsonPath =
+                            "$..benefitStructure.eliminationPeriod";
+                }
+
+                else if (normalizedField.contains(
+                        "benefitduration")) {
+
+                    jsonPath =
+                            "$..benefitStructure.benefitDuration";
+                }
+
+                /*
+                 * =====================================
+                 * EXTENDED ATTRIBUTES
+                 * =====================================
+                 */
+
+                else if (normalizedField.contains(
+                        "pilot")) {
+
+                    jsonPath =
+                            "$..extendedAttributes"
+                            + "[?(@.name=='pilot')]"
+                            + ".value";
+                }
+
+                else if (normalizedField.contains(
+                        "eoicode")
+
+                        ||
+
+                        normalizedField.contains(
+                                "eoicd")) {
+
+                    jsonPath =
+                            "$..extendedAttributes"
+                            + "[?(@.name=='eoiCd')]"
+                            + ".value";
+                }
+
+                else if (normalizedField.contains(
+                        "residualdisability")) {
+
+                    jsonPath =
+                            "$..extendedAttributes"
+                            + "[?(@.name=='isResidualDisability')]"
+                            + ".value";
+                }
+
+                /*
+                 * =====================================
+                 * AGENCY
+                 * =====================================
+                 */
+
+                else if (normalizedField.contains(
+                        "agentcode")) {
+
+                    jsonPath =
+                            "$..agencyCode";
+                }
+
+                else if (normalizedField.contains(
+                        "subagent")) {
+
+                    jsonPath =
+                            "$..subAgentID";
+                }
+
+                /*
+                 * =====================================
+                 * DOMICILE / SITUS
+                 * =====================================
+                 */
+
+                else if (normalizedField.contains(
+                        "domicile")
+
+                        ||
+
+                        normalizedField.contains(
+                                "situs")) {
+
+                    jsonPath =
+                            "$..contractStateCode";
+                }
+
+                /*
+                 * =====================================
+                 * FALLBACK MAPPING
+                 * =====================================
+                 */
+
+                if (actual.isEmpty()
+                        && jsonPath == null) {
+
+                    for (String mapKey :
+                            mappings.keySet()) {
+
+                        String normalizedMapKey =
+                                normalizeKey(
+                                        mapKey);
+
+                        if (normalizedField.equals(
+                                normalizedMapKey)
+
+                                ||
+
+                                normalizedField.contains(
+                                        normalizedMapKey)
+
+                                ||
+
+                                normalizedMapKey.contains(
+                                        normalizedField)) {
+
+                            jsonPath =
+                                    mappings.get(
+                                            mapKey);
+
+                            break;
+                        }
+                    }
+                }
+
+                /*
+                 * =====================================
+                 * READ USING JSONPATH
+                 * =====================================
+                 */
+
+                if (actual.isEmpty()
+                        && jsonPath != null) {
+
+                    try {
+
+                        Object result =
+                                JsonPath.read(
+                                        json,
+                                        jsonPath);
+
+                        actual =
+                                normalize(
+                                        extractValue(
+                                                result));
+
+                    } catch (Exception e) {
+
+                        actual =
+                                "JSONPATH ERROR";
+                    }
+                }
+
+                /*
+                 * =====================================
+                 * VALUE SEARCH IF NO MAPPING
+                 * =====================================
+                 */
+
+                if (actual.isEmpty()) {
+
+                    boolean valueFound =
+                            searchValueInJson(
+                                    json,
+                                    expected);
+
+                    ValidationResult vr =
+                            new ValidationResult();
+
+                    vr.setPolicyNumber(
+                            policyNumber);
+
+                    vr.setVersion(
+                            version);
+
+                    vr.setFieldName(
+                            excelField);
+
+                    vr.setExpectedValue(
+                            expected);
+
+                    vr.setWorkbookFile(
+                            workbookName);
+
+                    vr.setJsonFile(
+                            jsonName);
+
+                    if (valueFound) {
+
+                        vr.setActualValue(
+                                "VALUE EXISTS IN JSON");
+
+                        vr.setStatus(
+                                "VALUE_FOUND_NO_MAPPING");
+
+                    } else {
+
+                        vr.setActualValue(
+                                "MAPPING NOT FOUND");
+
+                        vr.setStatus(
+                                "NO_MAPPING");
+                    }
+
+                    ResultStore.results.add(
+                            vr);
+
+                    continue;
+                }
+
+                /*
+                 * =====================================
+                 * FINAL RESULT
+                 * =====================================
+                 */
+
+                ValidationResult vr =
+                        createResult(
+                                policyNumber,
+                                version,
+                                excelField,
+                                expected,
+                                actual,
+                                workbookName,
+                                jsonName);
+
+                ResultStore.results.add(
+                        vr);
+            }
+
+            previousFields = fields;
+        }
+    }
+
+    /*
+     * =========================================
+     * CLASS FIELD VALUE
+     * =========================================
+     */
+
+    private static String getClassFieldValue(
+
+            String json,
+
+            String classNumber,
+
+            String fieldName) {
+
+        try {
+
+            List<Map<String, Object>> classes =
+                    JsonPath.read(
+                            json,
+                            "$..classes[*]");
+
+            for (Map<String, Object> cls :
+                    classes) {
+
+                Object clsNum =
+                        cls.get(
+                                "classNumber");
+
+                if (clsNum == null)
+                    continue;
+
+                if (normalize(
+                        String.valueOf(
+                                clsNum))
+
+                        .equalsIgnoreCase(
+                                normalize(
+                                        classNumber))) {
+
+                    Object value =
+                            cls.get(
+                                    fieldName);
+
+                    return value == null
+                            ? ""
+                            : normalize(
+                                    String.valueOf(
+                                            value));
+                }
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return "";
+    }
+
+    /*
+     * =========================================
+     * COVERAGE FIELD VALUE
+     * =========================================
+     */
+
+    private static String getCoverageFieldValue(
+
+            String json,
+
+            String coverageCode,
+
+            String fieldName) {
+
+        try {
+
+            List<Map<String, Object>> coverages =
+                    JsonPath.read(
+                            json,
+                            "$..coverages[*]");
+
+            for (Map<String, Object> coverage :
+                    coverages) {
+
+                Object code =
+                        coverage.get(
+                                "coverageCode");
+
+                if (code == null)
+                    continue;
+
+                if (normalize(
+                        String.valueOf(
+                                code))
+
+                        .equalsIgnoreCase(
+                                normalize(
+                                        coverageCode))) {
+
+                    Object value =
+                            coverage.get(
+                                    fieldName);
+
+                    return value == null
+                            ? ""
+                            : normalize(
+                                    String.valueOf(
+                                            value));
+                }
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return "";
+    }
+
+    /*
+     * =========================================
+     * MATCHING VALUE
+     * =========================================
+     */
+
+    private static String getMatchingValue(
+
+            String json,
+
+            String jsonPath,
+
+            String expected) {
+
+        try {
+
+            List<Object> values =
+                    JsonPath.read(
+                            json,
+                            jsonPath);
+
+            for (Object obj : values) {
+
+                if (obj == null)
+                    continue;
+
+                String value =
+                        normalize(
+                                String.valueOf(
+                                        obj));
+
+                if (value.equalsIgnoreCase(
+                        normalize(
+                                expected))) {
+
+                    return value;
+                }
+            }
+
+            if (!values.isEmpty()) {
+
+                return normalize(
+                        String.valueOf(
+                                values.get(0)));
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return "";
+    }
+
+    /*
+     * =========================================
+     * CHECK MISSING / NEW FIELDS
+     * =========================================
+     */
+
+    private static void checkMissingFields(
+
+            Map<String, String> previousFields,
+
+            Map<String, String> currentFields,
+
+            String version,
+
+            String workbookName,
+
+            String jsonName,
+
+            String policyNumber) {
+
+        /*
+         * MISSING FIELDS
+         */
+
+        for (String previousField :
+                previousFields.keySet()) {
+
+            boolean exists =
+                    false;
+
+            String normalizedPrevious =
+                    normalizeKey(
+                            previousField);
+
+            for (String currentField :
+                    currentFields.keySet()) {
+
+                String normalizedCurrent =
+                        normalizeKey(
+                                currentField);
+
+                if (normalizedPrevious.equals(
+                        normalizedCurrent)) {
+
+                    exists = true;
+
+                    break;
+                }
+            }
+
+            if (!exists) {
+
+                ValidationResult vr =
+                        new ValidationResult();
+
+                vr.setPolicyNumber(
+                        policyNumber);
+
+                vr.setVersion(
+                        version);
+
+                vr.setFieldName(
+                        previousField);
+
+                vr.setExpectedValue(
+                        previousFields.get(
+                                previousField));
+
+                vr.setActualValue(
+                        "FIELD NOT PRESENT");
+
+                vr.setStatus(
+                        "MISSING_IN_CURRENT_VERSION");
+
+                vr.setWorkbookFile(
+                        workbookName);
+
+                vr.setJsonFile(
+                        jsonName);
+
+                ResultStore.results.add(
+                        vr);
+            }
+        }
+
+        /*
+         * NEW FIELDS
+         */
+
+        for (String currentField :
+                currentFields.keySet()) {
+
+            boolean exists =
+                    false;
+
+            String normalizedCurrent =
+                    normalizeKey(
+                            currentField);
+
+            for (String previousField :
+                    previousFields.keySet()) {
+
+                String normalizedPrevious =
+                        normalizeKey(
+                                previousField);
+
+                if (normalizedCurrent.equals(
+                        normalizedPrevious)) {
+
+                    exists = true;
+
+                    break;
+                }
+            }
+
+            if (!exists) {
+
+                ValidationResult vr =
+                        new ValidationResult();
+
+                vr.setPolicyNumber(
+                        policyNumber);
+
+                vr.setVersion(
+                        version);
+
+                vr.setFieldName(
+                        currentField);
+
+                vr.setExpectedValue(
+                        "NOT PRESENT IN PREVIOUS VERSION");
+
+                vr.setActualValue(
+                        currentFields.get(
+                                currentField));
+
+                vr.setStatus(
+                        "NEW_FIELD_IN_CURRENT_VERSION");
+
+                vr.setWorkbookFile(
+                        workbookName);
+
+                vr.setJsonFile(
+                        jsonName);
+
+                ResultStore.results.add(
+                        vr);
+            }
+        }
+    }
+
+    /*
+     * =========================================
+     * CREATE RESULT
+     * =========================================
+     */
+
+    private static ValidationResult createResult(
+
+            String policyNumber,
+
+            String version,
+
+            String fieldName,
+
+            String expected,
+
+            String actual,
+
+            String workbookName,
+
+            String jsonName) {
+
+        ValidationResult vr =
+                new ValidationResult();
+
+        vr.setPolicyNumber(
+                policyNumber);
+
+        vr.setVersion(
+                version);
+
+        vr.setFieldName(
+                fieldName);
+
+        vr.setExpectedValue(
+                expected);
+
+        vr.setActualValue(
+                actual);
+
+        vr.setWorkbookFile(
+                workbookName);
+
+        vr.setJsonFile(
+                jsonName);
+
+        if (normalize(expected)
+                .equalsIgnoreCase(
+                        normalize(actual))) {
+
+            vr.setStatus(
+                    "PASS");
+
+        } else {
+
+            vr.setStatus(
+                    "FAIL");
+        }
+
+        return vr;
+    }
+
+    /*
+     * =========================================
+     * EXTRACT VALUE
+     * =========================================
+     */
+
+    private static String extractValue(
+            Object result) {
+
+        if (result == null)
+            return "";
+
+        if (result instanceof List) {
+
+            List<?> list =
+                    (List<?>) result;
+
+            if (list.isEmpty())
+                return "";
+
+            StringBuilder sb =
+                    new StringBuilder();
+
+            for (Object obj : list) {
+
+                if (obj == null)
+                    continue;
+
+                if (sb.length() > 0) {
+
+                    sb.append(",");
+                }
+
+                sb.append(obj.toString());
+            }
+
+            return sb.toString();
+        }
+
+        return String.valueOf(
+                result);
+    }
+
+    /*
+     * =========================================
+     * NORMALIZE VALUE
+     * =========================================
+     */
+
+    private static String normalize(
+            String value) {
+
+        if (value == null)
+            return "";
+
+        value = value.trim();
+
+        if (value.endsWith(".0")) {
+
+            value =
+                    value.substring(
+                            0,
+                            value.length() - 2);
+        }
+
+        try {
+
+            if (value.contains("E")
+                    || value.contains("e")) {
+
+                BigDecimal bd =
+                        new BigDecimal(
+                                value);
+
+                value =
+                        bd.toPlainString();
+            }
+
+        } catch (Exception e) {
+
+        }
+
+        return value
+
+                .replace("\n", "")
+
+                .replace("\r", "")
+
+                .replace("T00:00:00Z", "")
+
+                .trim();
+    }
+
+    /*
+     * =========================================
+     * NORMALIZE FIELD
+     * =========================================
+     */
+
+    private static String normalizeKey(
+            String key) {
+
+        if (key == null)
+            return "";
+
+        return key
+
+                .replaceAll(
+                        "[^a-zA-Z0-9]",
+                        "")
+
+                .trim()
+
+                .toLowerCase();
+    }
+
+    /*
+     * =========================================
+     * GET FIELD VALUE
+     * =========================================
+     */
+
+    private static String getFieldValue(
+            Map<String, String> fields,
+            String... aliases) {
+
+        for (String key :
+                fields.keySet()) {
+
+            String normalizedKey =
+                    normalizeKey(
+                            key);
+
+            for (String alias :
+                    aliases) {
+
+                if (normalizedKey.contains(
+                        alias.toLowerCase())) {
+
+                    return normalize(
+                            fields.get(key));
+                }
+            }
+        }
+
+        return "";
+    }
+
+    /*
+     * =========================================
+     * SEARCH VALUE IN JSON
+     * =========================================
+     */
+
+    private static boolean searchValueInJson(
+            String json,
+            String expectedValue) {
+
+        try {
+
+            if (expectedValue == null
+                    || expectedValue.isEmpty()) {
+
+                return false;
+            }
+
+            return json.toLowerCase()
+                    .contains(
+                            expectedValue
+                                    .toLowerCase());
+
+        } catch (Exception e) {
+
+            return false;
+        }
+    }
+}
