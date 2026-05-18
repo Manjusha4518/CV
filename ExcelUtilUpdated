@@ -1,6 +1,6 @@
-package utilities;
+package v20.Utilities;
 
-import model.ExcelField;
+import v20.Utilities.ExcelField;
 import org.apache.poi.ss.usermodel.*;
 
 import java.io.FileInputStream;
@@ -77,7 +77,7 @@ public class ExcelUtil {
                         row.getCell(2);
 
                 if (fieldCell == null
-                        || valueCell == null)
+                    || valueCell == null)
                     continue;
 
                 String field =
@@ -93,8 +93,8 @@ public class ExcelUtil {
                  */
 
                 if (field == null
-                        || field.trim()
-                        .isEmpty())
+                    || field.trim()
+                            .isEmpty())
                     continue;
 
                 /*
@@ -159,7 +159,7 @@ public class ExcelUtil {
                  */
 
                 if (numeric ==
-                        (long) numeric) {
+                    (long) numeric) {
 
                     return String.valueOf(
                             (long) numeric);
