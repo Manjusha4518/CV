@@ -1,0 +1,207 @@
+package utilities;
+
+import model.ExcelField;
+import org.apache.poi.ss.usermodel.*;
+
+import java.io.FileInputStream;
+import java.util.*;
+
+public class ExcelUtil {
+
+    public static Map<String,
+            List<ExcelField>> readWorkbook(
+            String path)
+            throws Exception {
+
+        /*
+         * =====================================
+         * VERSION -> ROWS
+         * =====================================
+         */
+
+        Map<String,
+                List<ExcelField>> workbookData =
+
+                new LinkedHashMap<>();
+
+        FileInputStream fis =
+                new FileInputStream(path);
+
+        Workbook workbook =
+                WorkbookFactory.create(fis);
+
+        /*
+         * =====================================
+         * LOOP SHEETS
+         * =====================================
+         */
+
+        for (Sheet sheet : workbook) {
+
+            String version =
+                    extractVersion(
+                            sheet.getSheetName());
+
+            /*
+             * STORE ALL ROWS
+             */
+
+            List<ExcelField> fields =
+                    new ArrayList<>();
+
+            /*
+             * =====================================
+             * LOOP ROWS
+             * =====================================
+             */
+
+            for (int i = 1;
+                 i <= sheet.getLastRowNum();
+                 i++) {
+
+                Row row =
+                        sheet.getRow(i);
+
+                if (row == null)
+                    continue;
+
+                /*
+                 * COLUMN B -> FIELD
+                 * COLUMN C -> VALUE
+                 */
+
+                Cell fieldCell =
+                        row.getCell(1);
+
+                Cell valueCell =
+                        row.getCell(2);
+
+                if (fieldCell == null
+                        || valueCell == null)
+                    continue;
+
+                String field =
+                        getCellValue(
+                                fieldCell);
+
+                String value =
+                        getCellValue(
+                                valueCell);
+
+                /*
+                 * SKIP EMPTY
+                 */
+
+                if (field == null
+                        || field.trim()
+                        .isEmpty())
+                    continue;
+
+                /*
+                 * CREATE ROW OBJECT
+                 */
+
+                ExcelField ef =
+                        new ExcelField();
+
+                ef.setFieldName(
+                        field);
+
+                ef.setValue(
+                        value);
+
+                /*
+                 * ADD ROW
+                 */
+
+                fields.add(ef);
+            }
+
+            workbookData.put(
+                    version,
+                    fields);
+        }
+
+        workbook.close();
+
+        fis.close();
+
+        return workbookData;
+    }
+
+    /*
+     * =========================================
+     * CELL VALUE
+     * =========================================
+     */
+
+    private static String getCellValue(
+            Cell cell) {
+
+        if (cell == null)
+            return "";
+
+        switch (cell.getCellType()) {
+
+            case STRING:
+
+                return cell
+                        .getStringCellValue()
+                        .trim();
+
+            case NUMERIC:
+
+                double numeric =
+                        cell.getNumericCellValue();
+
+                /*
+                 * REMOVE .0
+                 */
+
+                if (numeric ==
+                        (long) numeric) {
+
+                    return String.valueOf(
+                            (long) numeric);
+                }
+
+                return String.valueOf(
+                        numeric);
+
+            case BOOLEAN:
+
+                return String.valueOf(
+                        cell.getBooleanCellValue());
+
+            case FORMULA:
+
+                return cell.getCellFormula();
+
+            default:
+
+                return "";
+        }
+    }
+
+    /*
+     * =========================================
+     * VERSION
+     * =========================================
+     */
+
+    private static String extractVersion(
+            String sheetName) {
+
+        /*
+         * 108868-42.0 -> 42
+         */
+
+        return sheetName
+
+                .split("-")[1]
+
+                .replace(".0", "")
+
+                .trim();
+    }
+}
