@@ -1,6 +1,8 @@
-package utilities;
+package v20.Utilities;
+
 
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 
 public class PolicyComparisonManager {
@@ -8,47 +10,31 @@ public class PolicyComparisonManager {
     public static void execute()
             throws Exception {
 
-        Map<File, File> files =
-                FileMatcherUtil
-                        .getMatchedFiles();
+        Map<File, File> files = FileMatcherUtil.getMatchedFiles();
 
-        for (Map.Entry<File, File> entry
-                : files.entrySet()) {
+        for (Map.Entry<File, File> entry : files.entrySet()) {
 
-            File workbook =
-                    entry.getKey();
+            File workbook = entry.getKey();
 
-            File json =
-                    entry.getValue();
+            File json = entry.getValue();
 
-            System.out.println(
-                    "\n#################################");
+            System.out.println("\n#################################");
 
-            System.out.println(
-                    "WORKBOOK : "
-                            + workbook.getName());
+            System.out.println("WORKBOOK : " + workbook.getName());
 
-            System.out.println(
-                    "JSON : "
-                            + json.getName());
+            System.out.println("JSON : " + json.getName());
 
-            System.out.println(
-                    "#################################");
-
-            Map<String,
-                    Map<String, String>> excelData =
-
-                    ExcelUtil.readWorkbook(
-                            workbook.getAbsolutePath());
+            System.out.println("#################################");
+            Map<String, List<ExcelField>> excelData =
+                    ExcelUtil.readWorkbook(workbook.getAbsolutePath());
 
             Map<String, String> jsonData =
+                    JsonUtil.getPolicyJsonMap(json.getAbsolutePath());
 
-                    JsonUtil.getPolicyJsonMap(
-                            json.getAbsolutePath());
+            String policyNumber=workbook.getName().split("_")[1];
 
-            CompareUtil.compare(
-                    excelData,
-                    jsonData);
+            CompareUtil.compare(excelData, jsonData, workbook.getName(), json.getName(),policyNumber);
         }
+        ReportUtil.generateReport();
     }
 }
