@@ -1,0 +1,967 @@
+package v20.Utilities;
+
+import com.jayway.jsonpath.JsonPath;
+import v20.Page.ValidationResult;
+
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+public class CompareUtil {
+
+    public static void compare(
+
+            Map<String, List<ExcelField>> excelData,
+
+            Map<String, String> jsonVersions,
+
+            String workbookName,
+
+            String jsonName,
+
+            String policyNumber) {
+
+        List<ExcelField> previousFields = null;
+
+        /*
+         * =========================================
+         * LOOP VERSIONS
+         * =========================================
+         */
+
+        for (String version : excelData.keySet()) {
+
+            String json =
+                    jsonVersions.get(version);
+
+            if (json == null) {
+
+                System.out.println(
+                        "JSON NOT FOUND : "
+                                + version);
+
+                continue;
+            }
+
+            List<ExcelField> fields =
+                    excelData.get(version);
+
+            /*
+             * =====================================
+             * MISSING / NEW FIELDS
+             * =====================================
+             */
+
+            if (previousFields != null) {
+
+                checkMissingAndNewFields(
+
+                        previousFields,
+
+                        fields,
+
+                        version,
+
+                        workbookName,
+
+                        jsonName,
+
+                        policyNumber);
+            }
+
+            /*
+             * =====================================
+             * CONTEXT VALUES
+             * =====================================
+             */
+
+            String classNumber =
+                    getFieldValue(
+
+                            fields,
+
+                            "classnumber",
+
+                            "classnum",
+
+                            "classno",
+
+                            "class");
+
+            /*
+             * =====================================
+             * LOOP EXCEL FIELDS
+             * =====================================
+             */
+
+            for (ExcelField field : fields) {
+
+                String excelField =
+                        field.getFieldName();
+
+                String expected =
+                        normalize(
+                                field.getValue());
+
+                String normalizedField =
+                        normalizeKey(
+                                excelField);
+
+                String actual = "";
+
+                /*
+                 * =====================================
+                 * PACSID
+                 * =====================================
+                 */
+
+                if (normalizedField.contains(
+                        "pacsid")) {
+
+                    actual =
+                            readJsonValue(
+                                    json,
+                                    "$..pacsId");
+                }
+
+                /*
+                 * =====================================
+                 * ACCOUNT DESIGNATION TYPE
+                 * =====================================
+                 */
+
+                else if (normalizedField.contains(
+                        "accountdesignationtype")) {
+
+                    actual =
+                            readJsonValue(
+                                    json,
+                                    "$..accountDesignationType");
+
+                    if (actual.equalsIgnoreCase("true")) {
+
+                        actual = "Yes";
+
+                    } else if (actual.equalsIgnoreCase("false")) {
+
+                        actual = "No";
+                    }
+                }
+
+                /*
+                 * =====================================
+                 * DATE BUSINESS STARTED
+                 * =====================================
+                 */
+
+                else if (normalizedField.contains(
+                        "datebusinessstarted")) {
+
+                    actual =
+                            readJsonValue(
+                                    json,
+                                    "$..inceptionDate");
+
+                    actual =
+                            formatDate(actual);
+                }
+
+                /*
+                 * =====================================
+                 * PRODUCT
+                 * =====================================
+                 */
+
+                else if (normalizedField.equals(
+                        "product")
+
+                        ||
+
+                        normalizedField.contains(
+                                "productname")
+
+                        ||
+
+                        normalizedField.contains(
+                                "selectproducts")) {
+
+                    actual =
+                            readJsonValue(
+                                    json,
+                                    "$..productCode");
+
+                    if (actual.equalsIgnoreCase("LTD")) {
+
+                        actual =
+                                "Long Term Disability";
+
+                    } else if (actual.equalsIgnoreCase("STD")) {
+
+                        actual =
+                                "Short Term Disability";
+                    }
+                }
+
+                /*
+                 * =====================================
+                 * CLASS NUMBER
+                 * =====================================
+                 */
+
+                else if (
+
+                        normalizedField.contains(
+                                "classnumber")
+
+                                ||
+
+                                normalizedField.contains(
+                                        "classnum")
+
+                                ||
+
+                                normalizedField.contains(
+                                        "classno")
+
+                                ||
+
+                                normalizedField.equals(
+                                        "class")) {
+
+                    actual =
+                            getMatchingValue(
+
+                                    json,
+
+                                    "$..classes[*].classNumber",
+
+                                    expected);
+                }
+
+                /*
+                 * =====================================
+                 * CLASS NAME
+                 * =====================================
+                 */
+
+                else if (
+
+                        normalizedField.contains(
+                                "classname")
+
+                                ||
+
+                                normalizedField.contains(
+                                        "classdescription")) {
+
+                    actual =
+                            getClassFieldValue(
+
+                                    json,
+
+                                    classNumber,
+
+                                    "classDescription");
+                }
+
+                /*
+                 * =====================================
+                 * DESCRIPTION
+                 * =====================================
+                 */
+
+                else if (
+
+                        normalizedField.equals(
+                                "description")) {
+
+                    actual =
+                            getClassFieldValue(
+
+                                    json,
+
+                                    classNumber,
+
+                                    "description");
+                }
+
+                /*
+                 * =====================================
+                 * FULL TIME HOURS
+                 * =====================================
+                 */
+
+                else if (
+
+                        normalizedField.contains(
+                                "fulltimehours")) {
+
+                    actual =
+                            getClassFieldValue(
+
+                                    json,
+
+                                    classNumber,
+
+                                    "fullTimeHours");
+                }
+
+                /*
+                 * =====================================
+                 * PART TIME HOURS
+                 * =====================================
+                 */
+
+                else if (
+
+                        normalizedField.contains(
+                                "parttimehours")) {
+
+                    actual =
+                            getClassFieldValue(
+
+                                    json,
+
+                                    classNumber,
+
+                                    "partTimeHours");
+                }
+
+                /*
+                 * =====================================
+                 * AGENCY / AGENT ID
+                 * =====================================
+                 */
+
+                else if (
+
+                        normalizedField.contains(
+                                "agencyagentid")) {
+
+                    actual =
+                            getMatchingAgencyCode(
+                                    json,
+                                    expected);
+                }
+
+                /*
+                 * =====================================
+                 * SUB AGENT ID
+                 * =====================================
+                 */
+
+                else if (
+
+                        normalizedField.contains(
+                                "subagentid")) {
+
+                    actual =
+                            getMatchingSubAgentId(
+                                    json,
+                                    expected);
+                }
+
+                /*
+                 * =====================================
+                 * GROUP DOMICILE STATE
+                 * =====================================
+                 */
+
+                else if (
+
+                        normalizedField.contains(
+                                "groupdomicilestate")) {
+
+                    actual =
+                            readJsonValue(
+                                    json,
+                                    "$..contractStateCode");
+                }
+
+                /*
+                 * =====================================
+                 * ORIGINAL PACS POLICY NUMBER
+                 * =====================================
+                 */
+
+                else if (
+
+                        normalizedField.contains(
+                                "originalpacspolicynumber")) {
+
+                    actual =
+                            readJsonValue(
+                                    json,
+                                    "$..policySource");
+                }
+
+                /*
+                 * =====================================
+                 * NO MAPPING
+                 * =====================================
+                 */
+
+                else {
+
+                    actual =
+                            "MAPPING NOT FOUND";
+                }
+
+                /*
+                 * =====================================
+                 * RESULT
+                 * =====================================
+                 */
+
+                ValidationResult vr =
+                        new ValidationResult();
+
+                vr.setPolicyNumber(
+                        policyNumber);
+
+                vr.setVersion(
+                        version);
+
+                vr.setFieldName(
+                        excelField);
+
+                vr.setExpectedValue(
+                        expected);
+
+                vr.setActualValue(
+                        actual);
+
+                vr.setWorkbookFile(
+                        workbookName);
+
+                vr.setJsonFile(
+                        jsonName);
+
+                if (normalize(expected)
+                        .equalsIgnoreCase(
+                                normalize(actual))) {
+
+                    vr.setStatus(
+                            "PASS");
+
+                } else {
+
+                    vr.setStatus(
+                            "FAIL");
+                }
+
+                ResultStore.results.add(vr);
+            }
+
+            previousFields = fields;
+        }
+    }
+
+    /*
+     * =========================================
+     * CLASS FIELD VALUE
+     * =========================================
+     */
+
+    private static String getClassFieldValue(
+
+            String json,
+
+            String classNumber,
+
+            String fieldName) {
+
+        try {
+
+            List<Map<String, Object>> classes =
+
+                    JsonPath.read(
+                            json,
+                            "$..classes[*]");
+
+            for (Map<String, Object> cls :
+                    classes) {
+
+                Object clsNum =
+                        cls.get(
+                                "classNumber");
+
+                if (clsNum == null)
+                    continue;
+
+                if (normalize(
+                        String.valueOf(clsNum))
+
+                        .equalsIgnoreCase(
+                                normalize(classNumber))) {
+
+                    Object value =
+                            cls.get(fieldName);
+
+                    return value == null
+                            ? ""
+                            : normalize(
+                            String.valueOf(value));
+                }
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return "";
+    }
+
+    /*
+     * =========================================
+     * MATCHING VALUE
+     * =========================================
+     */
+
+    private static String getMatchingValue(
+
+            String json,
+
+            String jsonPath,
+
+            String expected) {
+
+        try {
+
+            List<Object> values =
+
+                    JsonPath.read(
+                            json,
+                            jsonPath);
+
+            for (Object obj : values) {
+
+                if (obj == null)
+                    continue;
+
+                String value =
+                        normalize(
+                                String.valueOf(obj));
+
+                if (value.equalsIgnoreCase(
+                        normalize(expected))) {
+
+                    return value;
+                }
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return "";
+    }
+
+    /*
+     * =========================================
+     * READ JSON VALUE
+     * =========================================
+     */
+
+    private static String readJsonValue(
+
+            String json,
+
+            String jsonPath) {
+
+        try {
+
+            Object result =
+                    JsonPath.read(
+                            json,
+                            jsonPath);
+
+            if (result == null)
+                return "";
+
+            if (result instanceof List) {
+
+                List<?> list =
+                        (List<?>) result;
+
+                if (list.isEmpty())
+                    return "";
+
+                return normalize(
+                        String.valueOf(
+                                list.get(0)));
+            }
+
+            return normalize(
+                    String.valueOf(result));
+
+        } catch (Exception e) {
+
+            return "";
+        }
+    }
+
+    /*
+     * =========================================
+     * AGENCY CODE
+     * =========================================
+     */
+
+    private static String getMatchingAgencyCode(
+
+            String json,
+
+            String expected) {
+
+        try {
+
+            List<Map<String, Object>> splitParts =
+
+                    JsonPath.read(
+                            json,
+                            "$.premiumSplit.splitParts[*]");
+
+            for (Map<String, Object> splitPart :
+                    splitParts) {
+
+                List<Map<String, Object>> details =
+
+                        (List<Map<String, Object>>)
+                                splitPart.get(
+                                        "premiumSplitDetails");
+
+                if (details == null)
+                    continue;
+
+                for (Map<String, Object> detail :
+                        details) {
+
+                    Map<String, Object> broker =
+
+                            (Map<String, Object>)
+                                    detail.get(
+                                            "broker");
+
+                    if (broker == null)
+                        continue;
+
+                    Object agencyCodeObj =
+                            broker.get(
+                                    "agencyCode");
+
+                    if (agencyCodeObj == null)
+                        continue;
+
+                    String agencyCode =
+                            normalize(
+                                    String.valueOf(
+                                            agencyCodeObj));
+
+                    if (agencyCode.equalsIgnoreCase(
+                            normalize(expected))) {
+
+                        return agencyCode;
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return "";
+    }
+
+    /*
+     * =========================================
+     * SUB AGENT
+     * =========================================
+     */
+
+    private static String getMatchingSubAgentId(
+
+            String json,
+
+            String expected) {
+
+        try {
+
+            List<Map<String, Object>> splitParts =
+
+                    JsonPath.read(
+                            json,
+                            "$.premiumSplit.splitParts[*]");
+
+            for (Map<String, Object> splitPart :
+                    splitParts) {
+
+                List<Map<String, Object>> details =
+
+                        (List<Map<String, Object>>)
+                                splitPart.get(
+                                        "premiumSplitDetails");
+
+                if (details == null)
+                    continue;
+
+                for (Map<String, Object> detail :
+                        details) {
+
+                    Map<String, Object> broker =
+
+                            (Map<String, Object>)
+                                    detail.get(
+                                            "broker");
+
+                    if (broker == null)
+                        continue;
+
+                    Object agentCodeObj =
+                            broker.get(
+                                    "agentCode");
+
+                    if (agentCodeObj == null)
+                        continue;
+
+                    String agentCode =
+                            normalize(
+                                    String.valueOf(
+                                            agentCodeObj))
+
+                                    .replace("-", "");
+
+                    if (agentCode.equalsIgnoreCase(
+                            normalize(expected))) {
+
+                        return agentCode;
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return "";
+    }
+
+    /*
+     * =========================================
+     * MISSING / NEW FIELDS
+     * =========================================
+     */
+
+    private static void checkMissingAndNewFields(
+
+            List<ExcelField> previousFields,
+
+            List<ExcelField> currentFields,
+
+            String version,
+
+            String workbookName,
+
+            String jsonName,
+
+            String policyNumber) {
+
+        for (ExcelField previous :
+                previousFields) {
+
+            boolean found = false;
+
+            for (ExcelField current :
+                    currentFields) {
+
+                if (normalizeKey(
+                        previous.getFieldName())
+
+                        .equalsIgnoreCase(
+                                normalizeKey(
+                                        current.getFieldName()))) {
+
+                    found = true;
+
+                    break;
+                }
+            }
+
+            if (!found) {
+
+                ValidationResult vr =
+                        new ValidationResult();
+
+                vr.setPolicyNumber(
+                        policyNumber);
+
+                vr.setVersion(
+                        version);
+
+                vr.setFieldName(
+                        previous.getFieldName());
+
+                vr.setExpectedValue(
+                        previous.getValue());
+
+                vr.setActualValue(
+                        "FIELD MISSING");
+
+                vr.setStatus(
+                        "MISSING_IN_CURRENT_VERSION");
+
+                vr.setWorkbookFile(
+                        workbookName);
+
+                vr.setJsonFile(
+                        jsonName);
+
+                ResultStore.results.add(vr);
+            }
+        }
+    }
+
+    /*
+     * =========================================
+     * GET FIELD VALUE
+     * =========================================
+     */
+
+    private static String getFieldValue(
+
+            List<ExcelField> fields,
+
+            String... aliases) {
+
+        for (ExcelField ef :
+                fields) {
+
+            String fieldName =
+                    normalizeKey(
+                            ef.getFieldName());
+
+            for (String alias :
+                    aliases) {
+
+                if (fieldName.contains(
+                        normalizeKey(alias))) {
+
+                    return normalize(
+                            ef.getValue());
+                }
+            }
+        }
+
+        return "";
+    }
+
+    /*
+     * =========================================
+     * FORMAT DATE
+     * =========================================
+     */
+
+    private static String formatDate(
+            String input) {
+
+        try {
+
+            if (input.contains("T")) {
+
+                input =
+                        input.substring(0, 10);
+            }
+
+            SimpleDateFormat in =
+                    new SimpleDateFormat(
+                            "yyyy-MM-dd");
+
+            SimpleDateFormat out =
+                    new SimpleDateFormat(
+                            "MM/dd/yyyy");
+
+            Date d =
+                    in.parse(input);
+
+            return out.format(d);
+
+        } catch (Exception e) {
+
+            return input;
+        }
+    }
+
+    /*
+     * =========================================
+     * NORMALIZE
+     * =========================================
+     */
+
+    private static String normalize(
+            String value) {
+
+        if (value == null)
+            return "";
+
+        value = value.trim();
+
+        if (value.endsWith(".0")) {
+
+            value =
+                    value.substring(
+                            0,
+                            value.length() - 2);
+        }
+
+        try {
+
+            if (value.contains("E")
+                    || value.contains("e")) {
+
+                BigDecimal bd =
+                        new BigDecimal(value);
+
+                value =
+                        bd.toPlainString();
+            }
+
+        } catch (Exception e) {
+        }
+
+        return value
+
+                .replace("\n", "")
+
+                .replace("\r", "")
+
+                .replace("T00:00:00Z", "")
+
+                .trim();
+    }
+
+    /*
+     * =========================================
+     * NORMALIZE KEY
+     * =========================================
+     */
+
+    private static String normalizeKey(
+            String key) {
+
+        if (key == null)
+            return "";
+
+        return key
+
+                .replaceAll(
+                        "[^a-zA-Z0-9]",
+                        "")
+
+                .trim()
+
+                .toLowerCase();
+    }
+}
