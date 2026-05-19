@@ -1,0 +1,135 @@
+private static String getAgencyDetails(String json,
+                                       String type,
+                                       String expectedAgencyCode) {
+
+    try {
+
+        List<Map<String, Object>> splitParts =
+                JsonPath.read(json,
+                        "$.premiumSplit.splitParts[*]");
+
+        for (Map<String, Object> splitPart : splitParts) {
+
+            List<Map<String, Object>> details =
+                    (List<Map<String, Object>>)
+                            splitPart.get("premiumSplitDetails");
+
+            if (details == null)
+                continue;
+
+            for (Map<String, Object> detail : details) {
+
+                Map<String, Object> broker =
+                        (Map<String, Object>) detail.get("broker");
+
+                if (broker == null)
+                    continue;
+
+                /*
+                 * MATCH AGENCY CODE
+                 */
+
+                String agencyCode =
+                        normalize(String.valueOf(
+                                broker.get("agencyCode")));
+
+                if (!agencyCode.equalsIgnoreCase(
+                        normalize(expectedAgencyCode))) {
+
+                    continue;
+                }
+
+                /*
+                 * AGENCY/AGENT NAME
+                 */
+
+                if (type.equalsIgnoreCase("AGENCYNAME")) {
+
+                    return normalize(String.valueOf(
+                            broker.get("agencyName")));
+                }
+
+                /*
+                 * SUB AGENT NAME
+                 */
+
+                else if (type.equalsIgnoreCase("SUBAGENTNAME")) {
+
+                    return normalize(String.valueOf(
+                            broker.get("agentName")));
+                }
+
+                /*
+                 * WRITING AGENT
+                 */
+
+                else if (type.equalsIgnoreCase("WRITINGAGENT")) {
+
+                    return normalize(String.valueOf(
+                            broker.get("isPrimary")));
+                }
+
+                /*
+                 * RESPONSIBLE AGENT
+                 */
+
+                else if (type.equalsIgnoreCase("RESPONSIBLEAGENT")) {
+
+                    return normalize(String.valueOf(
+                            broker.get("isResponsibleAgent")));
+                }
+
+                /*
+                 * EFFECTIVE DATE
+                 */
+
+                else if (type.equalsIgnoreCase("EFFECTIVEDATE")) {
+
+                    return formatDate(
+                            normalize(String.valueOf(
+                                    broker.get("effectiveDate"))));
+                }
+
+                /*
+                 * COMPENSATION SCHEDULE
+                 */
+
+                else if (type.equalsIgnoreCase("COMPENSATIONSCHEDULE")) {
+
+                    return normalize(String.valueOf(
+                            detail.get("compensationTypeCode")));
+                }
+
+                /*
+                 * COMP %
+                 */
+
+                else if (type.equalsIgnoreCase("COMPPERCENT")) {
+
+                    Map<String, Object> contract =
+                            (Map<String, Object>)
+                                    detail.get("contractAssignment");
+
+                    if (contract == null)
+                        return "";
+
+                    Map<String, Object> calc =
+                            (Map<String, Object>)
+                                    contract.get("commissionCalculation");
+
+                    if (calc == null)
+                        return "";
+
+                    return normalize(String.valueOf(
+                            calc.get("value")));
+                }
+            }
+        }
+
+    } catch (Exception e) {
+
+        e.printStackTrace();
+    }
+
+    return "";
+}
