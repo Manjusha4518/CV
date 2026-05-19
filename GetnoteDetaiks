@@ -1,0 +1,134 @@
+private static String getNotesDetails(String json, String type) {
+
+    StringBuilder result = new StringBuilder();
+
+    try {
+
+        /*
+         * =====================================
+         * NOTES ARRAY
+         * =====================================
+         */
+
+        List<Map<String, Object>> notes =
+                JsonPath.read(json, "$..notes[*]");
+
+        if (notes == null || notes.isEmpty()) {
+
+            return "";
+        }
+
+        /*
+         * =====================================
+         * LOOP NOTES
+         * =====================================
+         */
+
+        for (Map<String, Object> note : notes) {
+
+            String value = "";
+
+            /*
+             * =====================================
+             * NOTE TYPE
+             * =====================================
+             */
+
+            if (type.equalsIgnoreCase("NOTETYPE")) {
+
+                Object obj = note.get("noteType");
+
+                if (obj != null) {
+
+                    value = normalize(obj.toString());
+                }
+            }
+
+            /*
+             * =====================================
+             * NOTE TEXT
+             * =====================================
+             */
+
+            else if (type.equalsIgnoreCase("NOTETEXT")) {
+
+                Object obj = note.get("noteText");
+
+                if (obj != null) {
+
+                    value = normalize(obj.toString());
+                }
+            }
+
+            /*
+             * =====================================
+             * CREATED BY
+             * =====================================
+             */
+
+            else if (type.equalsIgnoreCase("CREATEDBY")) {
+
+                Object obj = note.get("createdBy");
+
+                if (obj != null) {
+
+                    value = normalize(obj.toString());
+                }
+            }
+
+            /*
+             * =====================================
+             * CREATED DATE
+             * =====================================
+             */
+
+            else if (type.equalsIgnoreCase("CREATEDDATE")) {
+
+                Object obj = note.get("createdDate");
+
+                if (obj != null) {
+
+                    value = formatDate(obj.toString());
+                }
+            }
+
+            /*
+             * =====================================
+             * NOTE CATEGORY
+             * =====================================
+             */
+
+            else if (type.equalsIgnoreCase("NOTECATEGORY")) {
+
+                Object obj = note.get("noteCategory");
+
+                if (obj != null) {
+
+                    value = normalize(obj.toString());
+                }
+            }
+
+            /*
+             * =====================================
+             * APPEND
+             * =====================================
+             */
+
+            if (value != null && !value.isEmpty()) {
+
+                if (result.length() > 0) {
+
+                    result.append(",");
+                }
+
+                result.append(value);
+            }
+        }
+
+    } catch (Exception e) {
+
+        e.printStackTrace();
+    }
+
+    return result.toString();
+}
