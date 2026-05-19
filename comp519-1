@@ -1,0 +1,1075 @@
+package v20.Utilities;
+
+import com.jayway.jsonpath.JsonPath;
+import v20.Common.DataNormalizer;
+import v20.Common.JsonUtils;
+import v20.Page.ValidationResult;
+import v20.StepDefinition.Hooks;
+
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+public class CompareUtil {
+
+    private static int compensationIndex=0;
+    private static int agencyIndex=0;
+    public static void compare(Map<String, List<ExcelField>> excelData, Map<String, String> jsonVersions, String workbookName, String jsonName, String policyNumber) {
+        compensationIndex=0;
+        agencyIndex=0;
+        List<ExcelField> previousFields = null;
+
+        String highestVersion = getHighestVersion(excelData.keySet());
+
+        for (String version : excelData.keySet()) {
+            compensationIndex=0;
+            agencyIndex=0;
+            String json = jsonVersions.get(version);
+
+            if (json == null) {
+
+                System.out.println("JSON NOT FOUND : " + version);
+
+                continue;
+            }
+
+            List<ExcelField> fields = excelData.get(version);
+
+            /*
+             * =====================================
+             * MISSING / NEW FIELDS
+             * =====================================
+             */
+
+            if (previousFields != null) {
+
+                checkMissingAndNewFields(previousFields, fields, version, workbookName, jsonName, policyNumber);
+            }
+
+            /*
+             * =====================================
+             * CONTEXT VALUES
+             * =====================================
+             */
+
+            String classNumber = getFieldValue(fields, "classnumber", "classnum", "classno", "class");            /*
+             * =====================================
+             * LOOP EXCEL FIELDS
+             * =====================================
+             */
+
+            for (ExcelField field : fields) {
+
+                String excelField = field.getFieldName();
+
+                String expected = normalize(field.getValue());
+
+                String normalizedField = normalizeKey(excelField);
+
+                String actual = "";
+
+                if (normalizedField.contains("pacsid")) {
+
+                    actual = readJsonValue(json, "$.customer.pacsid");
+                } else if (normalizedField.contains("accountdesignationtype")) {
+                    actual = readJsonValue(json, "$.customer.details.accountDesignationType");
+                    if (actual.equalsIgnoreCase("false") || actual.equalsIgnoreCase(""))
+
+                        actual = "No";
+                    else if (actual.equalsIgnoreCase("true")) actual = "Yes";
+                } else if (normalizedField.contains("datebusinessstarted")) {
+
+                    actual = readJsonValue(json, "$..effectiveDate");
+
+                    actual = formatDate(actual);
+                } else if (normalizedField.equals("product") || normalizedField.contains("productname") || normalizedField.contains("selectproducts")) {
+                    actual = readJsonValue(json, "$..productCode");
+
+                    if (actual.equalsIgnoreCase("LTD")) {
+
+                        actual = "Long Term Disability";
+
+                    } else if (actual.equalsIgnoreCase("STD")) {
+
+                        actual = "Short Term Disability";
+                    }
+                } else if (normalizedField.contains("classnumber") || normalizedField.contains("classnum") || normalizedField.contains("classno") || normalizedField.equals("class")) {
+                    actual = getMatchingValue(json, "$..classes[*].classNumber", expected);
+                } else if (normalizedField.contains("classname") || normalizedField.contains("classdescription")) {
+                    actual = getClassFieldValue(json, classNumber, "classDescription");
+                } else if (normalizedField.equals("description")) {
+
+                    actual = getClassFieldValue(json, classNumber, "description");
+                } else if (normalizedField.contains("fulltimehours")) {
+
+                    actual = getClassFieldValue(json, classNumber, "fullTimeHours");
+                } else if (normalizedField.contains("parttimehours")) {
+
+                    actual = getClassFieldValue(json, classNumber, "partTimeHours");
+                } else if (normalizedField.contains("agencyagentid")) {
+
+                    actual = getMatchingAgencyCode(json, expected);
+
+                } else if (normalizedField.contains("subagentid")) {
+
+                    actual = getMatchingSubAgentId(json, expected);
+                } else if (normalizedField.contains("groupdomicilestate")) {
+
+                    actual = readJsonValue(json, "$..contractStateCode");
+                } else if (normalizedField.contains("originalpacspolicynumber")) {
+
+                    actual = readJsonValue(json, "$..policySource");
+                } else if (normalizedField.contains("convertedversionnumber")) {
+
+                    actual = readJsonValue(json, "$..boSeq");
+                } else if (normalizedField.contains("convertedversiontype")) {
+
+                    actual = readJsonValue(json, "$..versionDescription");
+                } else if (normalizedField.contains("convertedversiontype")) {
+
+                    actual = readJsonValue(json, "$..versionDescription");
+                } else if (normalizedField.equals("originalpacspolicyeffectivedate")) {
+
+                    actual = readJsonValue(json, "$..effectiveDate");
+                    actual = formatDate(actual);
+                } else if (normalizedField.equals("convertedversioneffectivedate")) {
+
+                    actual = readJsonValue(json, "$..inceptionDate");
+                    actual = formatDate(actual);
+                } else if (normalizedField.contains("supportingdata")) {
+
+                    actual = "PACS v." + version;
+                } else if (normalizedField.contains("highestpacsversionnumber")) {
+
+                    actual = highestVersion;
+                } else if (normalizedField.equals("effectivedate")) {
+                    actual = getSalesRepDetails(json, "EFFECTIVEDATE");
+                } else if (normalizedField.equals("effectivedate")) {
+                    actual = getSalesRepDetails(json, "EFFECTIVEDATE");
+                } else if (normalizedField.contains("rso")) {
+                    actual = getSalesRepDetails(json, "RSO");
+                } else if (normalizedField.contains("salesrepresentative")) {
+                    actual = getSalesRepDetails(json, "SALESREP");
+                } else if (normalizedField.contains("primary")) {
+                    actual = getSalesRepDetails(json, "PRIMARY");
+                } else if (normalizedField.contains("percentage")) {
+                    actual = getSalesRepDetails(json, "PERCENTAGE");
+                } else if (normalizedField.equals("terminationdate")) {
+                    actual = getSalesRepDetails(json, "TERMINATIONDATE");
+                } else if (normalizedField.equals("agencyagentname")) {
+                    actual = getAgencyDetails(json, "AgencyID");
+                }
+                else if (normalizedField.equals("agencyname")) {
+                    actual = getAgencyDetails(json, "AGENCYNAME");
+                }
+                else if (normalizedField.equals("subagentname")) {
+                    actual = getAgencyDetails(json, "SUBAGENTNAME");
+                } else if (normalizedField.equals("writingagent")) {
+                    actual = getAgencyDetails(json, "WRITINGAGENT");
+                } else if (normalizedField.equals("responsibleagent")) {
+                    actual = getAgencyDetails(json, "RESPONSIBLEAGENT");
+                } else if (normalizedField.equals("compensationschedule")) {
+                    actual = getAgencyDetails(json, "COMPENSATIONSCHEDULE");
+                } else if (normalizedField.equals("sharepercentage")) {
+                    actual = getAgencyDetails(json, "SHARE PERCENTAGE");
+                } else if (normalizedField.equals("agencyagenteffectivedate")) {
+                    actual = getAgencyDetails(json, "EFFECTIVEDATE");
+
+                } else if (normalizedField.equals("compensationruletype")) {
+                    actual = getAgencyDetails(json, "COMP_RULE_TYPE");
+
+                } else if (normalizedField.equals("plancode")) {
+                    actual = getAgencyDetails(json, "Plan Code");
+
+                } else if (normalizedField.equals("comp")) {
+                    actual = getAgencyDetails(json, "COMPPERCENT");
+
+                } else if (normalizedField.equals("comp")) {
+                    actual = getAgencyDetails(json, "COMP_PERCENT");
+
+                } else if (normalizedField.contains("subagenciesid")) {
+                    String subName = getAgencyDetails(json, "SUBAGENTNAME");
+                    if (!(subName == null)) {
+                        actual = getMatchingSubAgentId(json, expected);
+                    } else {
+                        actual = "";
+                    }
+                }
+
+
+                /*
+                 * =====================================
+                 * NO MAPPING
+                 * =====================================
+                 */
+
+                else {
+
+                    actual = "MAPPING NOT FOUND";
+                }
+
+                /*
+                 * =====================================
+                 * RESULT
+                 * =====================================
+                 */
+
+                ValidationResult vr = new ValidationResult();
+
+                vr.setPolicyNumber(policyNumber);
+
+                vr.setVersion(version);
+
+                vr.setFieldName(excelField);
+
+                vr.setExpectedValue(expected);
+
+                vr.setActualValue(actual);
+
+                vr.setWorkbookFile(workbookName);
+
+                vr.setJsonFile(jsonName);
+
+                if (normalize(expected).equalsIgnoreCase(normalize(actual))) {
+                    vr.setStatus("PASS");
+
+                } else {
+
+                    vr.setStatus("FAIL");
+                }
+
+                ResultStore.results.add(vr);
+            }
+
+            previousFields = fields;
+        }
+    }
+
+    private static String getClassFieldValue(String json, String classNumber, String fieldName) {
+        try {
+
+            List<Map<String, Object>> classes = JsonPath.read(json, "$..classes[*]");
+            for (Map<String, Object> cls : classes) {
+
+                Object clsNum = cls.get("classNumber");
+
+                if (clsNum == null) continue;
+
+                if (normalize(String.valueOf(clsNum)).equalsIgnoreCase(normalize(classNumber))) {
+
+                    Object value = cls.get(fieldName);
+
+                    return value == null ? "" : normalize(String.valueOf(value));
+                }
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return "";
+    }
+
+    private static String getMatchingValue(String json, String jsonPath, String expected) {
+
+        try {
+
+            List<Object> values = JsonPath.read(json, jsonPath);
+            for (Object obj : values) {
+
+                if (obj == null) continue;
+
+                String value = normalize(String.valueOf(obj));
+
+                if (value.equalsIgnoreCase(normalize(expected))) {
+
+                    return value;
+                }
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return "";
+    }
+
+
+    private static String readJsonValue(String json, String jsonPath) {
+        try {
+
+            Object result = JsonPath.read(json, jsonPath);
+
+            if (result == null) return "";
+
+            if (result instanceof List) {
+
+                List<?> list = (List<?>) result;
+
+                if (list.isEmpty()) return "";
+
+                return normalize(String.valueOf(list.get(0)));
+            }
+
+            return normalize(String.valueOf(result));
+
+        } catch (Exception e) {
+
+            return "";
+        }
+    }
+
+
+    private static String getMatchingAgencyCode(String json, String expected) {
+        try {
+
+            List<Map<String, Object>> splitParts = JsonPath.read(json, "$.premiumSplit.splitParts[*]");
+            for (Map<String, Object> splitPart : splitParts) {
+
+                List<Map<String, Object>> details = (List<Map<String, Object>>) splitPart.get("premiumSplitDetails");
+                if (details == null) continue;
+
+                for (Map<String, Object> detail : details) {
+
+                    Map<String, Object> broker = (Map<String, Object>) detail.get("broker");
+                    if (broker == null) continue;
+                    Object agencyCodeObj = broker.get("agencyCode");
+                    if (agencyCodeObj == null) continue;
+
+                    String agencyCode = normalize(String.valueOf(agencyCodeObj));
+                    if (agencyCode.equalsIgnoreCase(normalize(expected))) {
+                        return agencyCode;
+                    }
+
+                }
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return "";
+    }
+
+//    private static String getAgencyDetails(String json, String type) {
+//
+//        StringBuilder result = new StringBuilder();
+//
+//        try {
+//
+//            List<Map<String, Object>> splitParts = JsonPath.read(json, "$.premiumSplit.splitParts[*]");
+//
+//            if (splitParts == null || splitParts.isEmpty()) {
+//
+//                return "";
+//            }
+//
+//            for (Map<String, Object> splitPart : splitParts) {
+//
+//                List<Map<String, Object>> details = (List<Map<String, Object>>) splitPart.get("premiumSplitDetails");
+//
+//                if (details == null) continue;
+//
+//                for (Map<String, Object> detail : details) {
+//
+//                    Map<String, Object> broker = (Map<String, Object>) detail.get("broker");
+//
+//                    if (broker == null) continue;
+//
+//                    String value = "";
+//
+//                    /*
+//                     * =====================================
+//                     * AGENCY / AGENT ID
+//                     * =====================================
+//                     */
+//
+//                    if (type.equalsIgnoreCase("AGENCY_AGENT_ID")) {
+//
+//                        Object obj = broker.get("agencyCode");
+//
+//                        if (obj != null) {
+//
+//                            value = normalize(obj.toString());
+//                        }
+//                    }
+//
+//                    /*
+//                     * =====================================
+//                     * AGENCY NAME
+//                     * =====================================
+//                     */
+//
+//                    else if (type.equalsIgnoreCase("AGENCY_NAME")) {
+//
+//                        Object obj = broker.get("agencyName");
+//
+//                        if (obj != null) {
+//
+//                            value = normalize(obj.toString());
+//                        }
+//                    }
+//
+//                    /*
+//                     * =====================================
+//                     * SUB AGENT ID
+//                     * =====================================
+//                     */
+//
+//                    else if (type.equalsIgnoreCase("SUB_AGENT_ID")) {
+//
+//                        Object obj = broker.get("agentCode");
+//
+//                        if (obj != null) {
+//
+//                            value = normalize(obj.toString()).replace("-", "");
+//                        }
+//                    }
+//
+//                    /*
+//                     * =====================================
+//                     * SUB AGENT NAME
+//                     * =====================================
+//                     */
+//
+//                    else if (type.equalsIgnoreCase("SUB_AGENT_NAME")) {
+//
+//                        Object obj = broker.get("agentName");
+//
+//                        if (obj != null) {
+//
+//                            value = normalize(obj.toString());
+//                        }
+//                    }
+//
+//                    /*
+//                     * =====================================
+//                     * WRITING AGENT
+//                     * =====================================
+//                     */
+//
+//                    else if (type.equalsIgnoreCase("WRITING_AGENT")) {
+//
+//                        Object obj = broker.get("isPrimary");
+//
+//                        if (obj != null) {
+//
+//                            value = normalize(obj.toString());
+//                        }
+//                    }
+//
+//                    /*
+//                     * =====================================
+//                     * RESPONSIBLE AGENT
+//                     * =====================================
+//                     */
+//
+//                    else if (type.equalsIgnoreCase("RESPONSIBLE_AGENT")) {
+//
+//                        Object obj = broker.get("isResponsibleAgent");
+//
+//                        if (obj != null) {
+//
+//                            value = normalize(obj.toString());
+//                        }
+//                    }
+//
+//                    /*
+//                     * =====================================
+//                     * EFFECTIVE DATE
+//                     * =====================================
+//                     */
+//
+//                    else if (type.equalsIgnoreCase("EFFECTIVE_DATE")) {
+//
+//                        Object obj = broker.get("effectiveDate");
+//
+//                        if (obj != null) {
+//
+//                            value = formatDate(obj.toString());
+//                        }
+//                    }
+//
+//                    /*
+//                     * =====================================
+//                     * COMPENSATION SCHEDULE
+//                     * =====================================
+//                     */
+//
+//                    else if (type.equalsIgnoreCase("COMPENSATION_SCHEDULE")) {
+//
+//                        Object obj = detail.get("compensationTypeCode");
+//
+//                        if (obj != null) {
+//
+//                            value = normalize(obj.toString());
+//                        }
+//                    }
+//
+//                    /*
+//                     * =====================================
+//                     * COMP RULE TYPE
+//                     * =====================================
+//                     */
+//
+//                    else if (type.equalsIgnoreCase("COMP_RULE_TYPE")) {
+//
+//                        Map<String, Object> contractAssignment = (Map<String, Object>) detail.get("contractAssignment");
+//                        if (contractAssignment != null) {
+//
+//                            Map<String, Object> commissionCalculation = (Map<String, Object>) contractAssignment.get("commissionCalculation");
+//
+//                            if (commissionCalculation != null) {
+//
+//                                Object obj = commissionCalculation.get("type");
+//
+//                                if (obj != null) {
+//
+//                                    value = normalize(obj.toString());
+//                                }
+//                            }
+//                        }
+//                    } else if (type.equalsIgnoreCase("Plan Code")) {
+//
+//                        Map<String, Object> contractAssignment = (Map<String, Object>) detail.get("contractAssignment");
+//                        if (contractAssignment != null) {
+//
+//                            Map<String, Object> commissionCalculation = (Map<String, Object>) contractAssignment.get("commissionCalculation");
+//
+//                            if (commissionCalculation != null) {
+//
+//                                Object obj = commissionCalculation.get("planCode");
+//
+//                                if (obj != null) {
+//
+//                                    value = normalize(obj.toString());
+//                                }
+//                            }
+//                        }
+//                    }
+//
+//                    /*
+//                     * =====================================
+//                     * SHARE %
+//                     * =====================================
+//                     */
+//
+//                    else if (type.equalsIgnoreCase("SHARE_PERCENTAGE")) {
+//
+//                        Object obj = detail.get("compensationSplitParentAgencyPercent");
+//
+//                        if (obj != null) {
+//
+//                            value = normalize(obj.toString());
+//                        }
+//                    }
+//
+//                    /*
+//                     * =====================================
+//                     * COMP %
+//                     * =====================================
+//                     */
+//
+//                    else if (type.equalsIgnoreCase("COMP_PERCENT")) {
+//
+//                        Map<String, Object> contractAssignment = (Map<String, Object>) detail.get("contractAssignment");
+//
+//                        if (contractAssignment != null) {
+//
+//                            Map<String, Object> override = (Map<String, Object>) contractAssignment.get("commissionCalculation");
+//
+//                            if (override != null) {
+//
+//                                Object obj = override.get("rate");
+//
+//                                if (obj != null) {
+//
+//                                    value = normalize(obj.toString());
+//                                }
+//                            }
+//                        }
+//                    }
+//
+//                    /*
+//                     * =====================================
+//                     * AVOID DUPLICATES
+//                     * =====================================
+//                     */
+//
+//                    if (value != null && !value.isEmpty()) {
+//
+//                        if (result.length() > 0) {
+//
+//                            result.append(",");
+//                        }
+//
+//                        result.append(value);
+//                    }
+//                }
+//            }
+//
+//        } catch (Exception e) {
+//
+//            e.printStackTrace();
+//        }
+//
+//        return result.toString();
+//    }
+
+    private static String getAgencyDetails(String json, String type) {
+
+        try {
+
+
+            List<Map<String, Object>> splitParts = JsonPath.read(json, "$.premiumSplit.splitParts[*]");
+
+            if(splitParts==null)
+                return "";
+            for (Map<String, Object> splitPart : splitParts) {
+
+                List<Map<String, Object>> details = (List<Map<String, Object>>) splitPart.get("premiumSplitDetails");
+
+                if (details==null)
+               continue;
+               
+
+                for (Map<String, Object> detail : details) {
+
+                    Map<String, Object> broker = (Map<String, Object>) detail.get("broker");
+
+                    if (broker == null) continue;
+
+                    /*
+                     * MATCH AGENCY CODE
+                     */
+
+
+                    if (type.equalsIgnoreCase(normalize("AgencyID"))) {
+                        Object value = broker.get("agencyCode");
+                        return value == null ? "" : normalize(value.toString());
+                    }
+
+                    /*
+                     * AGENCY/AGENT NAME
+                     */
+
+                    if (type.equalsIgnoreCase("AGENCYNAME")) {
+                        Object value =broker.get("agencyName");
+                        return value == null ? "" : normalize(value.toString());
+                    }
+
+                    /*
+                     * SUB AGENT NAME
+                     */
+
+                    else if (type.equalsIgnoreCase("SUBAGENTNAME")) {
+                        Object value =broker.get("agentName");
+                        return value == null ? "" : normalize(value.toString());
+                    }
+
+                    /*
+                     * WRITING AGENT
+                     */
+
+                    else if (type.equalsIgnoreCase("WRITINGAGENT")) {
+                        Object value =broker.get("isPrimary");
+                        return value == null ? "" : normalize(value.toString());
+                    }
+
+                    /*
+                     * RESPONSIBLE AGENT
+                     */
+
+                    else if (type.equalsIgnoreCase("RESPONSIBLEAGENT")) {
+                        Object value =broker.get("isResponsibleAgent");
+                        return value == null ? "" : normalize(value.toString());
+                    }
+
+                    /*
+                     * EFFECTIVE DATE
+                     */
+
+                    else if (type.equalsIgnoreCase("EFFECTIVEDATE")) {
+                        Object value =broker.get("effectiveDate");
+                        value=formatDate((String) value);
+                        return value == null ? "" : normalize(value.toString());
+
+                    }
+
+                    /*
+                     * COMPENSATION SCHEDULE
+                     */
+
+                    else if (type.equalsIgnoreCase("COMPENSATIONSCHEDULE")) {
+                        List<String> values=new ArrayList<>();
+                        Object value =detail.get("compensationTypeCode");
+                       if(value!=null)
+                       {
+                           values.add(normalize(value.toString()));
+                       }
+                       if(values.isEmpty())
+                       {
+                           return "";
+                       }
+                       if(compensationIndex>=values.size())
+                       {
+
+                           compensationIndex=0;
+                       }
+                        String result=values.get(compensationIndex);
+                       compensationIndex++;
+                       return result;
+                    }
+                    else if (type.equalsIgnoreCase("SHARE PERCENTAGE")) {
+                        Object value =detail.get("compensationSplitParentAgencyPercent");
+                        return value == null ? "" : normalize(value.toString());
+
+                    } else if (type.equalsIgnoreCase("COMP_RULE_TYPE")) {
+
+                        Map<String, Object> contractAssignment = (Map<String, Object>) detail.get("contractAssignment");
+                        if (contractAssignment != null) {
+
+                            Map<String, Object> commissionCalculation = (Map<String, Object>) contractAssignment.get("commissionCalculation");
+
+                            if (commissionCalculation != null) {
+
+                                Object value = commissionCalculation.get("type");
+
+                                return value == null ? "" : normalize(value.toString());
+                            }
+                        }
+                    } else if (type.equalsIgnoreCase("Plan Code")) {
+
+                        Map<String, Object> contractAssignment = (Map<String, Object>) detail.get("contractAssignment");
+                        if (contractAssignment != null) {
+
+                            Map<String, Object> commissionCalculation = (Map<String, Object>) contractAssignment.get("commissionCalculation");
+
+                            if (commissionCalculation != null) {
+
+                                Object value = commissionCalculation.get("planCode");
+
+                                return value == null ? "" : normalize(value.toString());
+                            }
+                        }
+                    }
+
+                    /*
+                     * COMP %
+                     */
+
+                    else if (type.equalsIgnoreCase("COMPPERCENT")) {
+
+                        Map<String, Object> contract = (Map<String, Object>) detail.get("contractAssignment");
+
+                        if (contract == null) return "";
+
+                        Map<String, Object> calc = (Map<String, Object>) contract.get("commissionCalculation");
+
+                        if (calc == null) return "";
+                        Map<String, Object> comp = (Map<String, Object>) calc.get("commissionRate");
+                        {
+                            Object value = comp.get("rate");
+                            return value == null ? "" : normalize(value.toString());
+                        }
+
+
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return "";
+    }
+
+    private static String getMatchingSubAgentId(String json, String expected) {
+
+        try {
+
+            List<Map<String, Object>> splitParts = JsonPath.read(json, "$.premiumSplit.splitParts[*]");
+
+            for (Map<String, Object> splitPart : splitParts) {
+
+                List<Map<String, Object>> details = (List<Map<String, Object>>) splitPart.get("premiumSplitDetails");
+
+                if (details == null) continue;
+
+                for (Map<String, Object> detail : details) {
+
+                    Map<String, Object> broker = (Map<String, Object>) detail.get("broker");
+
+                    if (broker == null) continue;
+
+                    Object agentCodeObj = broker.get("agentCode");
+                    if (agentCodeObj == null) continue;
+
+                    String agentCode = normalize(String.valueOf(agentCodeObj)).replace("-", "");
+
+                    if (agentCode.equalsIgnoreCase(normalize(expected))) {
+
+                        return agentCode;
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return "";
+    }
+
+    private static String getSalesRepDetails(String json, String type) {
+        StringBuilder result = new StringBuilder();
+        try {
+            List<Map<String, Object>> rsos = JsonPath.read(json, "$.regionalSalesOffices[?(@.terminationDate == null)]");
+//           System.out.println("Active rso's " + rsos.size());
+            if (rsos == null || rsos.isEmpty()) {
+                return "";
+            }
+            for (Map<String, Object> rso : rsos) {
+                String rsoCode = normalize(String.valueOf(rso.get("rsoCode")));
+
+                Object rsoTermination = rso.get("terminationDate");
+                String terminationDate = rsoTermination == null ? "" : normalize(rsoTermination.toString());
+                terminationDate = formatDate(terminationDate);
+
+                List<Map<String, Object>> reps = (List<Map<String, Object>>) rso.get("salesRepresentatives");
+                if (reps == null) continue;
+                for (Map<String, Object> rep : reps) {
+                    String value = "";
+
+                    if (type.equalsIgnoreCase("RSO")) {
+                        value = rsoCode;
+                    } else if (type.equalsIgnoreCase("SALESREP")) {
+                        Object salesRepObj = rep.get("salesRep");
+                        if (salesRepObj == null) continue;
+                        value = normalize(salesRepObj.toString());
+                        if (value.contains("(")) {
+                            value = value.substring(0, value.indexOf("(")).trim();
+                        }
+                    } else if (type.equalsIgnoreCase("PRIMARY")) {
+                        Object primaryObj = rep.get("isPrimary");
+                        if (primaryObj == null) continue;
+                        value = normalize(primaryObj.toString());
+
+                    } else if (type.equalsIgnoreCase("PERCENTAGE")) {
+                        Object percentageObj = rep.get("percentage");
+                        if (percentageObj == null) continue;
+                        value = normalize(percentageObj.toString());
+
+                    } else if (type.equalsIgnoreCase("TERMINATIONDATE")) {
+
+                        value = terminationDate;
+
+                    } else if (type.equalsIgnoreCase("EFFECTIVEDATE")) {
+
+                        Object effectiveObj = rep.get("effectiveDate");
+                        if (effectiveObj == null) continue;
+                        value = normalize(effectiveObj.toString());
+                        value = formatDate(value);
+
+                    }
+                    if (value != null && !value.isEmpty()) {
+                        if (result.length() > 0) {
+                            result.append(",");
+                        }
+                        result.append(value);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result.toString();
+    }
+
+
+
+    /*
+     * =========================================
+     * MISSING / NEW FIELDS
+     * =========================================
+     */
+
+    private static void checkMissingAndNewFields(List<ExcelField> previousFields, List<ExcelField> currentFields, String version, String workbookName, String jsonName, String policyNumber) {
+        for (ExcelField previous : previousFields) {
+
+            boolean found = false;
+
+            for (ExcelField current : currentFields) {
+
+                if (normalizeKey(previous.getFieldName())
+
+                        .equalsIgnoreCase(normalizeKey(current.getFieldName()))) {
+
+                    found = true;
+
+                    break;
+                }
+            }
+
+            if (!found) {
+
+                ValidationResult vr = new ValidationResult();
+
+                vr.setPolicyNumber(policyNumber);
+
+                vr.setVersion(version);
+
+                vr.setFieldName(previous.getFieldName());
+
+                vr.setExpectedValue(previous.getValue());
+
+                vr.setActualValue("FIELD MISSING");
+
+                vr.setStatus("MISSING_IN_CURRENT_VERSION");
+
+                vr.setWorkbookFile(workbookName);
+
+                vr.setJsonFile(jsonName);
+
+                ResultStore.results.add(vr);
+            }
+        }
+    }
+
+    /*
+     * =========================================
+     * GET FIELD VALUE
+     * =========================================
+     */
+
+    private static String getFieldValue(List<ExcelField> fields, String... aliases) {
+
+        for (ExcelField ef : fields) {
+
+            String fieldName = normalizeKey(ef.getFieldName());
+
+            for (String alias : aliases) {
+
+                if (fieldName.contains(normalizeKey(alias))) {
+
+                    return normalize(ef.getValue());
+                }
+            }
+        }
+
+        return "";
+    }
+
+    /*
+     * =========================================
+     * FORMAT DATE
+     * =========================================
+     */
+
+    private static String formatDate(String input) {
+
+        try {
+
+            if (input.contains("T")) {
+
+                input = input.substring(0, 10);
+            }
+
+            SimpleDateFormat in = new SimpleDateFormat("yyyy-MM-dd");
+
+            SimpleDateFormat out = new SimpleDateFormat("MM/dd/yyyy");
+
+            Date d = in.parse(input);
+
+            return out.format(d);
+
+        } catch (Exception e) {
+
+            return input;
+        }
+    }
+
+    /*
+     * =========================================
+     * NORMALIZE
+     * =========================================
+     */
+
+    private static String normalize(String value) {
+
+        if (value == null) return "";
+
+        value = value.trim();
+
+        if (value.endsWith(".0")) {
+
+            value = value.substring(0, value.length() - 2);
+        }
+
+        try {
+
+            if (value.contains("E") || value.contains("e")) {
+
+                BigDecimal bd = new BigDecimal(value);
+
+                value = bd.toPlainString();
+            }
+
+        } catch (Exception e) {
+        }
+
+        return value
+
+                .replace("\n", "")
+
+                .replace("\r", "")
+
+                .replace("T00:00:00Z", "")
+
+                .trim();
+    }
+
+    /*
+     * =========================================
+     * NORMALIZE KEY
+     * =========================================
+     */
+
+    private static String normalizeKey(String key) {
+
+        if (key == null) return "";
+
+        return key
+
+                .replaceAll("[^a-zA-Z0-9]", "")
+
+                .trim()
+
+                .toLowerCase();
+    }
+
+    private static String getHighestVersion(Set<String> versions) {
+
+        int highest = Integer.MIN_VALUE;
+        for (String version : versions) {
+            try {
+                int value = Integer.parseInt(version.replaceAll("[^0-9]", ""));
+                if (value > highest) {
+                    highest = value;
+                }
+            } catch (Exception e) {
+
+            }
+        }
+        if (highest == Integer.MIN_VALUE) {
+            return "";
+        }
+        return String.valueOf(highest);
+    }
+}
