@@ -1,0 +1,331 @@
+private static String getAgencyDetails(
+        String json,
+        String type) {
+
+    StringBuilder result =
+            new StringBuilder();
+
+    try {
+
+        List<Map<String, Object>> splitParts =
+                JsonPath.read(
+                        json,
+                        "$.premiumSplit.splitParts[*]");
+
+        if (splitParts == null
+                || splitParts.isEmpty()) {
+
+            return "";
+        }
+
+        for (Map<String, Object> splitPart : splitParts) {
+
+            List<Map<String, Object>> details =
+                    (List<Map<String, Object>>)
+                            splitPart.get(
+                                    "premiumSplitDetails");
+
+            if (details == null)
+                continue;
+
+            for (Map<String, Object> detail : details) {
+
+                Map<String, Object> broker =
+                        (Map<String, Object>)
+                                detail.get("broker");
+
+                if (broker == null)
+                    continue;
+
+                String value = "";
+
+                /*
+                 * =====================================
+                 * AGENCY / AGENT ID
+                 * =====================================
+                 */
+
+                if (type.equalsIgnoreCase(
+                        "AGENCY_AGENT_ID")) {
+
+                    Object obj =
+                            broker.get(
+                                    "agencyCode");
+
+                    if (obj != null) {
+
+                        value =
+                                normalize(
+                                        obj.toString());
+                    }
+                }
+
+                /*
+                 * =====================================
+                 * AGENCY NAME
+                 * =====================================
+                 */
+
+                else if (type.equalsIgnoreCase(
+                        "AGENCY_NAME")) {
+
+                    Object obj =
+                            broker.get(
+                                    "agencyName");
+
+                    if (obj != null) {
+
+                        value =
+                                normalize(
+                                        obj.toString());
+                    }
+                }
+
+                /*
+                 * =====================================
+                 * SUB AGENT ID
+                 * =====================================
+                 */
+
+                else if (type.equalsIgnoreCase(
+                        "SUB_AGENT_ID")) {
+
+                    Object obj =
+                            broker.get(
+                                    "agentCode");
+
+                    if (obj != null) {
+
+                        value =
+                                normalize(
+                                        obj.toString())
+                                        .replace("-", "");
+                    }
+                }
+
+                /*
+                 * =====================================
+                 * SUB AGENT NAME
+                 * =====================================
+                 */
+
+                else if (type.equalsIgnoreCase(
+                        "SUB_AGENT_NAME")) {
+
+                    Object obj =
+                            broker.get(
+                                    "agentName");
+
+                    if (obj != null) {
+
+                        value =
+                                normalize(
+                                        obj.toString());
+                    }
+                }
+
+                /*
+                 * =====================================
+                 * WRITING AGENT
+                 * =====================================
+                 */
+
+                else if (type.equalsIgnoreCase(
+                        "WRITING_AGENT")) {
+
+                    Object obj =
+                            broker.get(
+                                    "isPrimary");
+
+                    if (obj != null) {
+
+                        value =
+                                normalize(
+                                        obj.toString());
+                    }
+                }
+
+                /*
+                 * =====================================
+                 * RESPONSIBLE AGENT
+                 * =====================================
+                 */
+
+                else if (type.equalsIgnoreCase(
+                        "RESPONSIBLE_AGENT")) {
+
+                    Object obj =
+                            broker.get(
+                                    "isResponsibleAgent");
+
+                    if (obj != null) {
+
+                        value =
+                                normalize(
+                                        obj.toString());
+                    }
+                }
+
+                /*
+                 * =====================================
+                 * EFFECTIVE DATE
+                 * =====================================
+                 */
+
+                else if (type.equalsIgnoreCase(
+                        "EFFECTIVE_DATE")) {
+
+                    Object obj =
+                            broker.get(
+                                    "effectiveDate");
+
+                    if (obj != null) {
+
+                        value =
+                                formatDate(
+                                        obj.toString());
+                    }
+                }
+
+                /*
+                 * =====================================
+                 * COMPENSATION SCHEDULE
+                 * =====================================
+                 */
+
+                else if (type.equalsIgnoreCase(
+                        "COMPENSATION_SCHEDULE")) {
+
+                    Object obj =
+                            detail.get(
+                                    "compensationTypeCode");
+
+                    if (obj != null) {
+
+                        value =
+                                normalize(
+                                        obj.toString());
+                    }
+                }
+
+                /*
+                 * =====================================
+                 * COMP RULE TYPE
+                 * =====================================
+                 */
+
+                else if (type.equalsIgnoreCase(
+                        "COMP_RULE_TYPE")) {
+
+                    Map<String, Object> contractAssignment =
+                            (Map<String, Object>)
+                                    detail.get(
+                                            "contractAssignment");
+
+                    if (contractAssignment != null) {
+
+                        Map<String, Object> commissionCalculation =
+                                (Map<String, Object>)
+                                        contractAssignment.get(
+                                                "commissionCalculation");
+
+                        if (commissionCalculation != null) {
+
+                            Object obj =
+                                    commissionCalculation.get(
+                                            "type");
+
+                            if (obj != null) {
+
+                                value =
+                                        normalize(
+                                                obj.toString());
+                            }
+                        }
+                    }
+                }
+
+                /*
+                 * =====================================
+                 * SHARE %
+                 * =====================================
+                 */
+
+                else if (type.equalsIgnoreCase(
+                        "SHARE_PERCENTAGE")) {
+
+                    Object obj =
+                            detail.get(
+                                    "compensationSplitParentAgencyPercent");
+
+                    if (obj != null) {
+
+                        value =
+                                normalize(
+                                        obj.toString());
+                    }
+                }
+
+                /*
+                 * =====================================
+                 * COMP %
+                 * =====================================
+                 */
+
+                else if (type.equalsIgnoreCase(
+                        "COMP_PERCENT")) {
+
+                    Map<String, Object> contractAssignment =
+                            (Map<String, Object>)
+                                    detail.get(
+                                            "contractAssignment");
+
+                    if (contractAssignment != null) {
+
+                        Map<String, Object> override =
+                                (Map<String, Object>)
+                                        contractAssignment.get(
+                                                "commissionOverrideTotal");
+
+                        if (override != null) {
+
+                            Object obj =
+                                    override.get(
+                                            "renewalYearTotal");
+
+                            if (obj != null) {
+
+                                value =
+                                        normalize(
+                                                obj.toString());
+                            }
+                        }
+                    }
+                }
+
+                /*
+                 * =====================================
+                 * AVOID DUPLICATES
+                 * =====================================
+                 */
+
+                if (value != null
+                        && !value.isEmpty()) {
+
+                    if (result.length() > 0) {
+
+                        result.append(",");
+                    }
+
+                    result.append(value);
+                }
+            }
+        }
+
+    } catch (Exception e) {
+
+        e.printStackTrace();
+    }
+
+    return result.toString();
+}
