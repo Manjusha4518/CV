@@ -1,0 +1,235 @@
+private static String getCoverageDetails(String json, String type) {
+
+    try {
+
+        List<Map<String, Object>> plans =
+                JsonPath.read(json, "$.plans[*]");
+
+        if (plans == null || plans.isEmpty()) {
+
+            return "FIELD NOT FOUND";
+        }
+
+        /*
+         * =====================================
+         * PLAN
+         * =====================================
+         */
+
+        if (type.equalsIgnoreCase("PLAN")) {
+
+            currentPlanIndex++;
+
+            currentCoverageIndex = 0;
+
+            if (currentPlanIndex >= plans.size()) {
+
+                return "FIELD NOT FOUND";
+            }
+
+            Map<String, Object> plan =
+                    plans.get(currentPlanIndex);
+
+            Object obj = plan.get("planName");
+
+            return obj == null
+                    ? "FIELD NOT FOUND"
+                    : normalize(obj.toString());
+        }
+
+        /*
+         * =====================================
+         * VALID PLAN
+         * =====================================
+         */
+
+        if (currentPlanIndex < 0
+                || currentPlanIndex >= plans.size()) {
+
+            return "FIELD NOT FOUND";
+        }
+
+        Map<String, Object> plan =
+                plans.get(currentPlanIndex);
+
+        /*
+         * =====================================
+         * COVERAGES
+         * =====================================
+         */
+
+        List<Map<String, Object>> coverages =
+                (List<Map<String, Object>>)
+                        plan.get("coverages");
+
+        if (coverages == null || coverages.isEmpty()) {
+
+            return "FIELD NOT FOUND";
+        }
+
+        /*
+         * =====================================
+         * VALID COVERAGE
+         * =====================================
+         */
+
+        if (currentCoverageIndex >= coverages.size()) {
+
+            currentCoverageIndex = 0;
+        }
+
+        Map<String, Object> coverage =
+                coverages.get(currentCoverageIndex);
+
+        String value = "";
+
+        /*
+         * =====================================
+         * COVERAGE
+         * =====================================
+         */
+
+        if (type.equalsIgnoreCase("COVERAGE")) {
+
+            Object obj =
+                    coverage.get("coverageName");
+
+            value = obj == null
+                    ? ""
+                    : normalize(obj.toString());
+        }
+
+        /*
+         * =====================================
+         * CONTRIBUTION TYPE
+         * =====================================
+         */
+
+        else if (type.equalsIgnoreCase("CONTRIBUTIONTYPE")) {
+
+            Map<String, Object> funding =
+                    (Map<String, Object>)
+                            coverage.get("fundingStructure");
+
+            if (funding != null) {
+
+                Object obj =
+                        funding.get("contributionType");
+
+                value = obj == null
+                        ? ""
+                        : normalize(obj.toString());
+            }
+        }
+
+        /*
+         * =====================================
+         * EMPLOYEE CONTRIBUTION
+         * =====================================
+         */
+
+        else if (type.equalsIgnoreCase("EMPLOYEECONTRIBUTION")) {
+
+            Map<String, Object> funding =
+                    (Map<String, Object>)
+                            coverage.get("fundingStructure");
+
+            if (funding != null) {
+
+                Object obj =
+                        funding.get("employeeContributionPercent");
+
+                value = obj == null
+                        ? ""
+                        : normalize(obj.toString());
+            }
+        }
+
+        /*
+         * =====================================
+         * EMPLOYER CONTRIBUTION
+         * =====================================
+         */
+
+        else if (type.equalsIgnoreCase("EMPLOYERCONTRIBUTION")) {
+
+            Map<String, Object> funding =
+                    (Map<String, Object>)
+                            coverage.get("fundingStructure");
+
+            if (funding != null) {
+
+                Object obj =
+                        funding.get("employerContributionPercent");
+
+                value = obj == null
+                        ? ""
+                        : normalize(obj.toString());
+            }
+        }
+
+        /*
+         * =====================================
+         * OFFSET TYPE
+         * =====================================
+         */
+
+        else if (type.equalsIgnoreCase("OFFSETTYPE")) {
+
+            List<Map<String, Object>> offsets =
+                    (List<Map<String, Object>>)
+                            coverage.get("offsets");
+
+            if (offsets != null && !offsets.isEmpty()) {
+
+                Object obj =
+                        offsets.get(0).get("offsetType");
+
+                value = obj == null
+                        ? ""
+                        : normalize(obj.toString());
+            }
+        }
+
+        /*
+         * =====================================
+         * OFFSET VALUE
+         * =====================================
+         */
+
+        else if (type.equalsIgnoreCase("OFFSETVALUE")) {
+
+            List<Map<String, Object>> offsets =
+                    (List<Map<String, Object>>)
+                            coverage.get("offsets");
+
+            if (offsets != null && !offsets.isEmpty()) {
+
+                Object obj =
+                        offsets.get(0).get("offsetValue");
+
+                value = obj == null
+                        ? ""
+                        : normalize(obj.toString());
+            }
+        }
+
+        /*
+         * =====================================
+         * MOVE COVERAGE INDEX
+         * =====================================
+         */
+
+        currentCoverageIndex++;
+
+        return value == null || value.isEmpty()
+                ? "FIELD NOT FOUND"
+                : value;
+
+    } catch (Exception e) {
+
+        e.printStackTrace();
+
+        return "FIELD NOT FOUND";
+    }
+}
