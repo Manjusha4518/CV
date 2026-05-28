@@ -1,0 +1,150 @@
+/*
+ * =========================================
+ * MISSING / NEW FIELDS
+ * =========================================
+ */
+
+private static void checkMissingAndNewFields(
+
+        List<ExcelField> previousFields,
+
+        List<ExcelField> currentFields,
+
+        String version,
+
+        String workbookName,
+
+        String jsonName,
+
+        String policyNumber) {
+
+    /*
+     * =====================================
+     * PREVIOUS VERSION FIELD SET
+     * =====================================
+     */
+
+    Set<String> previousSet =
+            new HashSet<>();
+
+    for (ExcelField previous :
+            previousFields) {
+
+        previousSet.add(
+
+                normalizeKey(
+                        previous.getFieldName()));
+    }
+
+    /*
+     * =====================================
+     * CURRENT VERSION FIELD SET
+     * =====================================
+     */
+
+    Set<String> currentSet =
+            new HashSet<>();
+
+    for (ExcelField current :
+            currentFields) {
+
+        currentSet.add(
+
+                normalizeKey(
+                        current.getFieldName()));
+    }
+
+    /*
+     * =====================================
+     * MISSING FIELDS
+     * =====================================
+     */
+
+    for (ExcelField previous :
+            previousFields) {
+
+        String previousKey =
+
+                normalizeKey(
+                        previous.getFieldName());
+
+        if (!currentSet.contains(previousKey)) {
+
+            ValidationResult vr =
+                    new ValidationResult();
+
+            vr.setPolicyNumber(
+                    policyNumber);
+
+            vr.setVersion(
+                    version);
+
+            vr.setFieldName(
+                    previous.getFieldName());
+
+            vr.setExpectedValue(
+                    previous.getValue());
+
+            vr.setActualValue(
+                    "FIELD MISSING");
+
+            vr.setStatus(
+                    "MISSING_IN_CURRENT_VERSION");
+
+            vr.setWorkbookFile(
+                    workbookName);
+
+            vr.setJsonFile(
+                    jsonName);
+
+            ResultStore.results.add(vr);
+        }
+    }
+
+    /*
+     * =====================================
+     * NEW FIELDS
+     * =====================================
+     */
+
+    for (ExcelField current :
+            currentFields) {
+
+        String currentKey =
+
+                normalizeKey(
+                        current.getFieldName());
+
+        if (!previousSet.contains(currentKey)) {
+
+            ValidationResult vr =
+                    new ValidationResult();
+
+            vr.setPolicyNumber(
+                    policyNumber);
+
+            vr.setVersion(
+                    version);
+
+            vr.setFieldName(
+                    current.getFieldName());
+
+            vr.setExpectedValue(
+                    "NEW FIELD");
+
+            vr.setActualValue(
+                    current.getValue());
+
+            vr.setStatus(
+                    "NEW_FIELD_IN_CURRENT_VERSION");
+
+            vr.setWorkbookFile(
+                    workbookName);
+
+            vr.setJsonFile(
+                    jsonName);
+
+            ResultStore.results.add(vr);
+        }
+    }
+}
