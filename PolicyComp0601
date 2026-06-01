@@ -1,0 +1,85 @@
+package v20.Utilities;
+
+import java.io.File;
+import java.util.List;
+import java.util.Map;
+
+public class PolicyComparisonManager {
+
+    public static void execute() throws Exception {
+
+        long suiteStart = System.currentTimeMillis();
+
+        Map<File, File> files = FileMatcherUtil.getMatchedFiles();
+
+        for (Map.Entry<File, File> entry : files.entrySet()) {
+
+            long policyStart = System.currentTimeMillis();
+
+            File workbook = entry.getKey();
+
+            File json = entry.getValue();
+
+            System.out.println("\n#################################");
+
+            System.out.println("WORKBOOK : " + workbook.getName());
+
+            System.out.println("JSON : " + json.getName());
+
+            System.out.println("#################################");
+
+
+            Map<String, List<ExcelField>> excelData =
+
+                    ExcelUtil.readWorkbook(workbook.getAbsolutePath());
+
+
+            Map<String, String> jsonData =
+
+                    JsonUtil.getPolicyJsonMap(json.getAbsolutePath());
+
+            
+            String policyNumber = extractPolicyNumber(workbook.getName());
+
+
+            CompareUtil.compare(excelData, jsonData, workbook.getName(), json.getName(), policyNumber);
+
+            excelData.clear();
+
+            jsonData.clear();
+
+            System.gc();
+
+            long policyEnd = System.currentTimeMillis();
+
+            System.out.println("Completed in : " + (policyEnd - policyStart) + " ms");
+        }
+
+        ReportUtil.generateReport();
+
+        long suiteEnd = System.currentTimeMillis();
+
+        System.out.println("\nTOTAL EXECUTION : " + (suiteEnd - suiteStart) + " ms");
+    }
+
+
+    private static String extractPolicyNumber(String fileName) {
+
+        try {
+
+
+            String[] parts = fileName.split("_");
+
+            if (parts.length > 1) {
+
+                return parts[1].replace(".xlsx", "").trim();
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return "UNKNOWN_POLICY";
+    }
+}
