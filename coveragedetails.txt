@@ -1,0 +1,444 @@
+private static String getCoverageDetails(String json, String type){
+
+        try {
+
+            List<Map<String, Object>> plans = JsonPath.read(json, "$.plans[*]");
+
+            if (plans == null || plans.isEmpty()) {
+
+                return "FIELD NOT FOUND";
+            }
+
+            if (type.equalsIgnoreCase("PLAN")) {
+
+                currentPlanIndex++;
+
+                currentCoverageIndex = -1;
+
+                if (currentPlanIndex >= plans.size()) {
+
+                    return "FIELD NOT FOUND";
+                }
+
+                Map<String, Object> plan = plans.get(currentPlanIndex);
+
+                Object obj = plan.get("planCode");
+
+                return obj == null ? "FIELD NOT FOUND" : normalize(obj.toString());
+            }
+
+            if (currentPlanIndex < 0 || currentPlanIndex >= plans.size()) {
+
+                return "FIELD NOT FOUND";
+            }
+
+            Map<String, Object> plan = plans.get(currentPlanIndex);
+
+            List<Map<String, Object>> coverages = (List<Map<String, Object>>) plan.get("coverages");
+
+            if (coverages == null || coverages.isEmpty()) {
+
+                return "FIELD NOT FOUND";
+            }
+
+            if (type.equalsIgnoreCase("COVERAGE")) {
+                currentCoverageIndex++;
+
+                if (currentCoverageIndex >= coverages.size()) {
+
+                    return "FIELD NOT FOUND";
+                }
+
+                Map<String, Object> coverage = coverages.get(currentCoverageIndex);
+                Object obj = coverage.get("coverageCode");
+                return obj == null ? "FIELD NOT FOUND" : obj.toString();
+
+            }
+
+            if (currentCoverageIndex < 0 || currentCoverageIndex >= coverages.size()) {
+
+                return "FIELD NOT FOUND";
+
+            }
+            Map<String, Object> coverage = coverages.get(currentCoverageIndex);
+
+
+            if (type.equalsIgnoreCase("PriorCoverage")) {
+                Object obj = coverage.get("isPriorCoverage");
+                return obj == null ? "" : normalize(obj.toString());
+            }
+            else if (type.equalsIgnoreCase("CoverageBasis")) {
+                Object obj = coverage.get("coverageBasisCode");
+                return obj == null ? "" : normalize(obj.toString());
+            }
+            else if (type.equalsIgnoreCase("CensusType")) {
+                Object obj = coverage.get("censusTypeCode");
+                return obj == null ? "" : (obj.toString());
+
+            } else if (type.equalsIgnoreCase("EstimatedActualParticipation%")) {
+                Object obj = coverage.get("assumedParticipationPercentage");
+                return obj == null ? "" : (obj.toString());
+            } else if (type.equalsIgnoreCase("NumberOfEligibleLives")) {
+                Object obj = coverage.get("numberOfEligibleLives");
+                return obj == null ? "" : (obj.toString());
+            } else if (type.equalsIgnoreCase("NumberOfParticipatingLives")) {
+                Object obj = coverage.get("numOfParticipatingLives");
+                return obj == null ? "" : (obj.toString());
+            } else if (type.equalsIgnoreCase("IsItATakeover?")) {
+                Object obj = coverage.get("isTakeOver");
+                return obj == null ? "" : (obj.toString());
+            } else if (type.equalsIgnoreCase("TransferOfCoverage?")) {
+                Object obj = coverage.get("transferOfCoverageType");
+
+                return obj == null ? "" : obj.toString().toUpperCase();
+
+
+            } else if (type.equalsIgnoreCase("PayableRateType")) {
+
+                Object obj = coverage.get("payableRateType");
+
+                return obj == null ? "" : (obj.toString());
+            } else if (type.equalsIgnoreCase("RateStructure")) {
+
+                Object obj = coverage.get("ageTypeCode");
+
+                return obj == null ? "" : (obj.toString());
+            } else if (type.equalsIgnoreCase("PrepareW2")) {
+
+                Object obj = coverage.get("matchFICA");
+
+                return obj == null ? "" : (obj.toString());
+            } else if (type.equalsIgnoreCase("EmployeePayableRateType")) {
+
+                Object obj = coverage.get("employeePayableRateType");
+
+                return obj == null ? "" : (obj.toString());
+            } else if (type.equalsIgnoreCase("EmployerPayableRateType")) {
+
+                Object obj = coverage.get("employerPayableRateType");
+
+                return obj == null ? "" : (obj.toString());
+            }
+
+
+            Map<String, Object> funding = (Map<String, Object>) coverage.get("fundingStructure");
+            List<Map<String, Object>> paymentModes = (List<Map<String, Object>>) funding.get("paymentModes");
+
+
+            if (type.equalsIgnoreCase("ContributionType")) {
+
+                Object obj = funding.get("contributionTypeCode");
+
+                return obj == null ? "" : normalize(obj.toString());
+
+            } else if (type.equalsIgnoreCase("EmployeeContribution%")) {
+
+                Object obj = funding.get("employeeContributionPercentage");
+
+                return obj == null ? "0" : normalize(obj.toString());
+
+            } else if (type.equalsIgnoreCase("EmployerContribution%")) {
+
+                Object obj = funding.get("employerContributionPercentage");
+
+                return obj == null ? "" : normalize(obj.toString());
+
+            } else if (type.equalsIgnoreCase("EmployeeContributionAmount")) {
+
+                Object obj = funding.get("employeeContributionAmount");
+
+                return obj == null ? "" : normalize(obj.toString());
+
+            } else if (type.equalsIgnoreCase("EmployerContributionAmount")) {
+
+                Object obj = funding.get("employerContributionAmount");
+
+                return obj == null ? "" : normalize(obj.toString());
+            } else if (type.equalsIgnoreCase("EEBenefitTaxable")) {
+
+                Object obj = funding.get("employeeBenefitTaxable");
+
+                return obj == null ? "" : normalize(obj.toString());
+            } else if (type.equalsIgnoreCase("ERBenefitTaxable")) {
+
+                Object obj = funding.get("employerBenefitTaxable");
+
+                return obj == null ? "" : (obj.toString());
+            } else if (type.equalsIgnoreCase("MinimumNumberOfParticipants")) {
+
+                Object obj = funding.get("minimumParticipantsNumber");
+
+                return obj == null ? "" : (obj.toString());
+            } else if (type.equalsIgnoreCase("RequiredParticipation")) {
+
+                Object obj = funding.get("requiredParticipationPercentage");
+
+                return obj == null ? "" : (obj.toString());
+            } else if (type.equalsIgnoreCase("EmployeePayrollFrequency")) {
+
+                Object obj = funding.get("employeePayrollFrequency");
+
+                return obj == null ? "" : (obj.toString());
+            } else if (type.equalsIgnoreCase("TaxabilityOptions")) {
+
+                Object obj = funding.get("taxabilityOptions");
+
+                return obj == null ? "" : (obj.toString());
+            }
+            if (type.equalsIgnoreCase("SponsorPaymentmode"))
+            {
+                if (paymentModes != null && !paymentModes.isEmpty()) {
+                    Map<String, Object> payObj = paymentModes.get(0);
+                    Object obj = payObj.get("paymentModeCode");
+                    return obj == null ? "" : (obj.toString());
+                }
+
+                else {
+                    return "";
+                }
+            }
+
+            Map<String, Object> benefitStructure = (Map<String, Object>) coverage.get("benefitStructure");
+
+            if (benefitStructure != null) ;
+            {
+                if (type.equalsIgnoreCase("BenefitType")) {
+                    Object obj = benefitStructure.get("benefitTypeCode");
+
+                    return obj == null ? "" : (obj.toString());
+                } else if (type.equalsIgnoreCase("BenefitPercentage")) {
+                    Object obj = benefitStructure.get("percentage");
+
+                    return obj == null ? "" : (obj.toString());
+                } else if (type.equalsIgnoreCase("MaximumMonthlyBenefit")) {
+                    Object obj = benefitStructure.get("maximumBenefitAmount");
+
+                    return obj == null ? "" : (obj.toString());
+                } else if (type.equalsIgnoreCase("BenefitDuration")) {
+                    Object obj = benefitStructure.get("benefitDurationCode");
+
+                    return obj == null ? "" : (obj.toString());
+                } else if (type.equalsIgnoreCase("EliminationPeriod(Days)")) {
+                    Object obj = benefitStructure.get("eliminationPeriod");
+
+                    return obj == null ? "" : (obj.toString());
+                }
+
+                List<Map<String, Object>> extAttrs = (List<Map<String, Object>>) benefitStructure.get("extendedAttributes");
+
+                for (Map<String, Object> attr : extAttrs) {
+                    Object nameObj = attr.get("name");
+                    Object valueObj = attr.get("value");
+
+                    if (type.equalsIgnoreCase("Increments") && nameObj.equals("incrementsAmount")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("EmployerPaidMonthlyBenefit") && nameObj.equals("employerPaidBenefit")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("MinimumMonthlyElection") && nameObj.equals("minimumGrossBenefit")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("MinimumMonthlyNetBenefit(LTD)") && nameObj.equals("minimumMonthlyBenefitCd")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("MinimumMonthlyNetBenefitAmountVPL") && nameObj.equals("minimumMonthlyNetBenefitVPLCd")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("MinimumMonthlyNetBenefitAmountASL") && nameObj.equals("minimumMonthlyNetBenefitASLAmount")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("InterruptionPeriod") && nameObj.equals("interruptionPeriod")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("InterruptionPeriodOther") && nameObj.equals("interruptionPeriodOther")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("OwnOccPeriod") && nameObj.equals("ownOccupationCoveragePeriod")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("SpecialtyOwnOccupation") && nameObj.equals("speciallyOwnOccupation")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("PartialDisability") && nameObj.equals("isPartialDisabilityIncluded")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("ResidualDisability") && nameObj.equals("isResidualDisability")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("NonHazardousOccupationWordingIncluded") && nameObj.equals("isNonhazardousOccupationWordingIncluded")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("PilotsDefinition") && nameObj.equals("pilot")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("RehabBenefit") && nameObj.equals("managedRehab")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("RehabOffsetPercentage") && nameObj.equals("rehabBenefitOffsetPercentage")) {
+                        return valueObj == null ? "FIELD N" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("SpecificIndemnity") && nameObj.equals("specificIndemnity")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("WorksiteBenefit") && nameObj.equals("worksiteBenefit")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("WorksiteMaximumAmount") && nameObj.equals("worksiteMaximumAmount")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("WorksiteModPercentage") && nameObj.equals("worksiteModificationPercentage")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("ExtendedDisabilityRider") && nameObj.equals("extendedDisabilityRider")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("ExtendedDisabilityRiderEffDate") && nameObj.equals("extendedDisabilityRiderEffDate")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("PERS/STRSState") && nameObj.equals("PERSSTRSState")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("GroupParticipatesInSocialSecurity") && nameObj.equals("groupParticipatesInSocialSecurity")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("Drug/Alcohol") && nameObj.equals("drugAndAlcoholLimitation")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("MentalAndNervous") && nameObj.equals("mentalAndNervousLimitation")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("LimitedBenefitPeriod(months)") && nameObj.equals("limitedBenefitPeriod")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("PreExistingConditionLimit") && nameObj.equals("preExConditionLimitCd")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("PreExFutureEmployeesOnly") && nameObj.equals("isPreExFutureEmployeesOnly")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("PreExistingOnIncreasedBenefits") && nameObj.equals("preExonIncreasedBenefitCd")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("PreExIncreaseBenefitAmount") && nameObj.equals("preExistIncreasedBenefitAmountCd")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("PreExIncreaseBenefitDate") && nameObj.equals("preExIncreaseBenefitDateCd")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("PreExistingOnOpenEnrollment") && nameObj.equals("preExistOnOpenEnrollmentCd")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("EOI") && nameObj.equals("eoiCd")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("EOIExcessAmount/Other") && nameObj.equals("eoiExcessAmount")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("WorkIncentiveBenefit") && nameObj.equals("workIncentiveBenefitDurationCode")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("ChildCareAgeLimit") && nameObj.equals("childCareAgeLimit")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("ChildCareBenefit") && nameObj.equals("childCareBenefit")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("ActivitiesOfDailyLivingBenefitApplies?") && nameObj.equals("isActivitiesOfDailyLivingBenefitApplied")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("ADLPercent") && nameObj.equals("adlPercent")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("ADLMaximumBenefitAmount") && nameObj.equals("adlMaximumBenefitAmount")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("ADLPreEx") && nameObj.equals("adlPreEx")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("COBRABenefitApplies") && nameObj.equals("isCobraBenefitApplied")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("COBRABenefit") && nameObj.equals("cobraBenefit")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("COBRADuration") && nameObj.equals("cobraDuration")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("CatastrophicCareBenefitApplies") && nameObj.equals("isCatastrophicCareBenefitApplied")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("CatBenefitDuration") && nameObj.equals("catastrophicDuration")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("CatBenefitAmtConfinement") && nameObj.equals("catastrophicBenefitAmountConfinement")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("CatBenefitAmtHome/Hospice") && nameObj.equals("catastrophicBenefitAmountHomeHospice")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("SurvivorBenefit") && nameObj.equals("survivorBenefit")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("LumpSum(NumberOfPayments)") && nameObj.equals("survivorBenefitLumpSumNumberOfPayments")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if (type.equalsIgnoreCase("MonthlyIncomeDuration(months)") && nameObj.equals("survivorBenefitMonthlyIncomeDuration")) {
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if ("MonthlyIncomePercentage".equalsIgnoreCase(type) && "survivorBenefitMonthlyIncomePercentage".equals(nameObj)) {
+
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if ("SplitBenefitApplies".equalsIgnoreCase(type) && "isSplitBenefit".equals(nameObj)) {
+
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if ("SplitBenefitPercent(2ndTier)".equalsIgnoreCase(type) && "splitBenefitPercentSecondTier".equals(nameObj)) {
+
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if ("SplitMaximumMonthlyBenefit(Tier2)".equalsIgnoreCase(type) && "SplitMaximumMonthlyBenefitSecondTier".equals(nameObj)) {
+
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if ("CostOfLivingAdjustment(COLA)Applies".equalsIgnoreCase(type) && "isCostOfLivingAdjustment".equals(nameObj)) {
+
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if ("COLAType".equalsIgnoreCase(type) && "colaType".equals(nameObj)) {
+
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if ("COLAPercentage".equalsIgnoreCase(type) && "colaPercentage".equals(nameObj)) {
+
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if ("COLADuration".equalsIgnoreCase(type) && "colaDuration".equals(nameObj)) {
+
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if ("LivingBenefitApplies".equalsIgnoreCase(type) && "isLivingBenefit".equals(nameObj)) {
+
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if ("LivingBenefitDuration".equalsIgnoreCase(type) && "livingBenefitDuration".equals(nameObj)) {
+
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if ("PensionSupplementBenefitApplies".equalsIgnoreCase(type) && "isPensionSupplement".equals(nameObj)) {
+
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if ("PensionSupplementBenefit%".equalsIgnoreCase(type) && "pensionSupplementBenefitPercentage".equals(nameObj)) {
+
+                        return valueObj.toString();
+                    } else if ("PensionSupplementBenefitMaximum".equalsIgnoreCase(type) && "pensionSupplementBenefitMaximumAmount".equals(nameObj)) {
+
+                        return valueObj.toString();
+                    } else if ("ConversionBenefitApplies".equalsIgnoreCase(type) && "isConversion".equals(nameObj)) {
+
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if ("ConversionEligibilityInMonths".equalsIgnoreCase(type) && "conversionDuration".equals(nameObj)) {
+
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if ("ConversionPercentageBenefit".equalsIgnoreCase(type) && "conversionPercentageBenefit".equals(nameObj)) {
+
+                        return valueObj == null ? "" : valueObj.toString();
+                    } else if ("ConversionBenefitMaximum".equalsIgnoreCase(type) && "conversionBenefitMaximum".equals(nameObj)) {
+
+                        return valueObj == null ? "" : valueObj.toString();
+                    }
+
+
+                }
+            }
+            Map<String, Object> offsets = (Map<String, Object>) coverage.get("offsets");
+
+            if (offsets != null && !offsets.isEmpty()) {
+
+                if (type.equalsIgnoreCase("IntegratioMmethod")) {
+                    Object obj = offsets.get("integrationMethod");
+                    return obj == null ? "" : (obj.toString());
+                } else if (type.equalsIgnoreCase("AllSourceBackdoorMaxPercentage")) {
+                    Object obj = offsets.get("AllSourceBackdoorMaxPercentage");
+                    return obj == null ? "" : (obj.toString());
+                } else if (type.equalsIgnoreCase("IntegrationOffsetItems")) {
+                    Object obj = offsets.get("offsetItems");
+                    return obj == null ? "" : (obj.toString());
+                } else if (type.equalsIgnoreCase("STDCoverageProvidedToEmployees")) {
+                    Object obj = offsets.get("typeOfCoverageProvidedToEmployees");
+                    return obj == null ? "" : (obj.toString());
+                } else if (type.equalsIgnoreCase("IsRSL/MatrixAdministeringSTDClaims")) {
+                    Object obj = offsets.get("isRSLMatrixAdministeringClaims");
+                    return obj == null ? "" : toTitleCase(obj.toString());
+                } else if (type.equalsIgnoreCase("DoesGroupParticipateInPERS/STRS")) {
+                    Object obj = offsets.get("isGroupParticipateInPERSOrSTRS");
+                    return obj == null ? "False" : (obj.toString());
+                }
+            }
+            List<Map<String, Object>> classes = (List<Map<String, Object>>) coverage.get("classes");
+
+            if (classes == null || classes.isEmpty()) {
+                return "FIELD NOT FOUND";
+            }
+
+
+            Map<String, Object> classObj = classes.get(0);
+
+            if ("ClassSelectionClass".equalsIgnoreCase(type)) {
+
+                Object obj = classObj.get("classNumber");
+                return obj == null ? "" : normalize(obj.toString());
+
+            } else if ("ClassDescriptionOther".equalsIgnoreCase(type)) {
+
+                Object obj = classObj.get("other");
+                return obj != null ? obj.toString() : "";
+
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+        }
+        return "FIELD NOT FOUND";
+    }
