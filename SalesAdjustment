@@ -1,0 +1,159 @@
+private static int salesPlanIndex = -1;
+private static int salesCoverageIndex = -1;
+private static int ageBandIndex = -1;private static String getSalesAdjustmentDetails(String json, String type) {
+
+    try {
+
+        List<Map<String, Object>> plans =
+                JsonPath.read(json,
+                        "$.rating.rateAggregate.ratePremium.policy.plans[*]");
+
+        if (plans == null || plans.isEmpty()) {
+            return "";
+        }
+
+        /*
+         * REPORT HAS ONLY ONE PLAN
+         */
+        if (salesPlanIndex == -1) {
+            salesPlanIndex = 0;
+        }
+
+        if (salesPlanIndex >= plans.size()) {
+            return "";
+        }
+
+        Map<String, Object> plan =
+                plans.get(salesPlanIndex);
+
+        String planName =
+                plan.get("planName") == null
+                        ? ""
+                        : plan.get("planName").toString();
+
+        List<Map<String, Object>> coverages =
+                (List<Map<String, Object>>) plan.get("coverages");
+
+        if (coverages == null || coverages.isEmpty()) {
+            return "";
+        }
+
+        /*
+         * PLAN
+         */
+        if (type.equalsIgnoreCase("Plan")) {
+
+            return normalize(planName);
+        }
+
+        /*
+         * COVERAGE
+         */
+        if (type.equalsIgnoreCase("Coverage")) {
+
+            salesCoverageIndex++;
+
+            ageBandIndex = -1;
+
+            if (salesCoverageIndex >= coverages.size()) {
+                return "";
+            }
+
+            Map<String, Object> coverage =
+                    coverages.get(salesCoverageIndex);
+
+            Object obj = coverage.get("coverageType");
+
+            return obj == null
+                    ? ""
+                    : normalize(obj.toString());
+        }
+
+        /*
+         * ALL OTHER FIELDS USE CURRENT COVERAGE
+         */
+        if (salesCoverageIndex < 0
+                || salesCoverageIndex >= coverages.size()) {
+
+            return "";
+        }
+
+        Map<String, Object> coverage =
+                coverages.get(salesCoverageIndex);
+
+        Object payableObj =
+                coverage.get("payableRateType");
+
+        String payableRateType =
+                payableObj == null
+                        ? "Composite"
+                        : payableObj.toString();
+
+        if (type.equalsIgnoreCase("RateUpdateReason")) {
+
+            return "Sales Adjustment";
+        }
+
+        /*
+         * COMPOSITE RATE
+         */
+        if (type.equalsIgnoreCase("QuoteRateComposite")) {
+
+            Map<String, Object> rateCard =
+                    (Map<String, Object>) coverage.get("rateCard");
+
+            if (rateCard == null) {
+                return "";
+            }
+
+            Object rate =
+                    rateCard.get("rate");
+
+            return rate == null
+                    ? ""
+                    : normalize(rate.toString());
+        }
+
+        /*
+         * AGE BAND RATE
+         */
+        if (type.equalsIgnoreCase("QuoteRateAgeBand")) {
+
+            List<Map<String, Object>> ageBands =
+                    (List<Map<String, Object>>) coverage.get("ageBands");
+
+            if (ageBands == null || ageBands.isEmpty()) {
+                return "";
+            }
+
+            ageBandIndex++;
+
+            if (ageBandIndex >= ageBands.size()) {
+                return "";
+            }
+
+            Map<String, Object> ageBand =
+                    ageBands.get(ageBandIndex);
+
+            Map<String, Object> rateCard =
+                    (Map<String, Object>) ageBand.get("rateCard");
+
+            if (rateCard == null) {
+                return "";
+            }
+
+            Object rate =
+                    rateCard.get("rate");
+
+            return rate == null
+                    ? ""
+                    : normalize(rate.toString());
+        }
+
+    } catch (Exception e) {
+
+        e.printStackTrace();
+    }
+
+    return "";
+}
