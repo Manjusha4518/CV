@@ -1,0 +1,253 @@
+     "premiumSplit": {
+        "splitParts": [
+          {
+            "premiumSplitDetails": [
+              {
+                "compensationTypeCode": "commission",
+                "contractAssignment": {
+                  "contractName": null,
+                  "status": null,
+                  "applicabilityStartDate": null,
+                  "applicabilityEndDate": null,
+                  "assignmentStartDate": null,
+                  "assignmentEndDate": null,
+                  "commissionOverrideTotal": {
+                    "commissionRuleType": null,
+                    "firstYearTotal": null,
+                    "renewalYearTotal": null
+                  },
+                  "commissionCalculation": {
+                    "type": "StandardGradedPercent",
+                    "totalRate": null,
+                    "includeInRating": false,
+                    "refundable": false,
+                    "planCode": "87",
+                    "commissionScale": [],
+                    "bounds": [
+                      {
+                        "denomination": "PERCENTAGE",
+                        "lower": 0,
+                        "upper": 15000,
+                        "rate": 11
+                      },
+                      {
+                        "denomination": "PERCENTAGE",
+                        "lower": 15001,
+                        "upper": 25000,
+                        "rate": 8
+                      },
+                      {
+                        "denomination": "PERCENTAGE",
+                        "lower": 25001,
+                        "upper": 50000,
+                        "rate": 5
+                      },
+                      {
+                        "denomination": "PERCENTAGE",
+                        "lower": 50001,
+                        "upper": null,
+                        "rate": 1
+                      }
+                    ],
+                    "commissionRate": {
+                      "denomination": null,
+                      "rate": null,
+                      "producerApprovedSubsidyVendor": false,
+                      "commissionRuleType": null,
+                      "chargeToCustomerPercentage": null,
+                      "unratedPercentage": null
+                    }
+                  }
+                },
+                "compensationSplitDetails": [],
+                "compensationSplitParentAgencyPercent": 100,
+                "compensationSplitPercent": null,
+                "borDate": null,
+                "borPremiumSplitLink": null,
+                "broker": {
+                  "salesforceID": "A0002904",
+                  "agencyCode": "141747",
+                  "agencyName": "Corporate Synergies Group LLC",
+                  "isResponsibleAgent": true,
+                  "isPrimary": false,
+                  "responsibleAgent": null,
+                  "agentCode": "141747-0000",
+                  "agentName": null,
+                  "effectiveDate": "2022-01-01T00:00:00Z",
+                  "terminationDate": null,
+                  "agencyAgentID": "141747-0000"
+                }
+              }
+            ],
+            "premiumSplitPercentage": 100
+          },
+          {
+            "premiumSplitDetails": [
+              {
+                "compensationTypeCode": "override",
+                "contractAssignment": {
+                  "contractName": null,
+                  "status": null,
+                  "applicabilityStartDate": null,
+                  "applicabilityEndDate": null,
+                  "assignmentStartDate": null,
+                  "assignmentEndDate": null,
+                  "commissionOverrideTotal": {
+                    "commissionRuleType": null,
+                    "firstYearTotal": null,
+                    "renewalYearTotal": null
+                  },
+                  "commissionCalculation": {
+                    "type": null,
+                    "totalRate": null,
+                    "includeInRating": false,
+                    "refundable": false,
+                    "planCode": null,
+                    "commissionScale": [],
+                    "bounds": [],
+                    "commissionRate": {
+                      "denomination": "PERCENTAGE",
+                      "rate": 5,
+                      "producerApprovedSubsidyVendor": false,
+                      "commissionRuleType": "FlatPercent",
+                      "chargeToCustomerPercentage": 5,
+                      "unratedPercentage": 0
+                    }
+                  }
+                },
+                "compensationSplitDetails": [],
+                "compensationSplitParentAgencyPercent": null,
+                "compensationSplitPercent": null,
+                "borDate": null,
+                "borPremiumSplitLink": null,
+                "broker": {
+                  "salesforceID": "A0388454",
+                  "agencyCode": "709136",
+                  "agencyName": "CENTRO BENEFITS RESEARCH LLC",
+                  "isResponsibleAgent": false,
+                  "isPrimary": false,
+                  "responsibleAgent": null,
+                  "agentCode": "709136-0000",
+                  "agentName": null,
+                  "effectiveDate": "2025-01-01T00:00:00Z",
+                  "terminationDate": null,
+                  "agencyAgentID": "709136-0000"
+                }
+              }
+            ],
+            "premiumSplitPercentage": 100
+          },
+          {
+            "premiumSplitDetails": [
+              {
+                "compensationTypeCode": null,
+                "contractAssignment": {
+                  "contractName": null,
+                  "status": null,
+                  "applicabilityStartDate": null,
+                  "applicabilityEndDate": null,
+                  "assignmentStartDate": null,
+                  "assignmentEndDate": null,
+                  "commissionOverrideTotal": {
+                    "commissionRuleType": null,
+                    "firstYearTotal": null,
+                    "renewalYearTotal": null
+                  },
+                  "commissionCalculation": {
+                    "type": null,
+                    "totalRate": null,
+                    "includeInRating": false,
+                    "refundable": false,
+                    "planCode": null,
+                    "commissionScale": [],
+                    "bounds": [],
+                    "commissionRate": {
+                      "denomination": null,
+                      "rate": null,
+                      "producerApprovedSubsidyVendor": false,
+                      "commissionRuleType": null,
+                      "chargeToCustomerPercentage": null,
+                      "unratedPercentage": null
+                    }
+                  }
+                },
+                "compensationSplitDetails": [],
+                "compensationSplitParentAgencyPercent": null,
+                "compensationSplitPercent": null,
+                "borDate": null,
+                "borPremiumSplitLink": null,
+                "broker": {
+                  "salesforceID": "C0444430",
+                  "agencyCode": "709136",
+                  "agencyName": "CENTRO BENEFITS RESEARCH LLC",
+                  "isResponsibleAgent": false,
+                  "isPrimary": false,
+                  "responsibleAgent": null,
+                  "agentCode": "709136-0001",
+                  "agentName": "DAN MCALONE",
+                  "effectiveDate": "2025-01-01T00:00:00Z",
+                  "terminationDate": null,
+                  "agencyAgentID": "709136-0001"
+                }
+              }
+            ],
+            "premiumSplitPercentage": 100
+          },
+          {
+            "premiumSplitDetails": [
+              {
+                "compensationTypeCode": null,
+                "contractAssignment": {
+                  "contractName": null,
+                  "status": null,
+                  "applicabilityStartDate": null,
+                  "applicabilityEndDate": null,
+                  "assignmentStartDate": null,
+                  "assignmentEndDate": null,
+                  "commissionOverrideTotal": {
+                    "commissionRuleType": null,
+                    "firstYearTotal": null,
+                    "renewalYearTotal": null
+                  },
+                  "commissionCalculation": {
+                    "type": null,
+                    "totalRate": null,
+                    "includeInRating": false,
+                    "refundable": false,
+                    "planCode": null,
+                    "commissionScale": [],
+                    "bounds": [],
+                    "commissionRate": {
+                      "denomination": null,
+                      "rate": null,
+                      "producerApprovedSubsidyVendor": false,
+                      "commissionRuleType": null,
+                      "chargeToCustomerPercentage": null,
+                      "unratedPercentage": null
+                    }
+                  }
+                },
+                "compensationSplitDetails": [],
+                "compensationSplitParentAgencyPercent": null,
+                "compensationSplitPercent": null,
+                "borDate": null,
+                "borPremiumSplitLink": null,
+                "broker": {
+                  "salesforceID": "C0002646",
+                  "agencyCode": "141747",
+                  "agencyName": "Corporate Synergies Group LLC",
+                  "isResponsibleAgent": false,
+                  "isPrimary": true,
+                  "responsibleAgent": null,
+                  "agentCode": "141747-0003",
+                  "agentName": "Michael T Lisa",
+                  "effectiveDate": "2022-01-01T00:00:00Z",
+                  "terminationDate": null,
+                  "agencyAgentID": "141747-0003"
+                }
+              }
+            ],
+            "premiumSplitPercentage": 100
+          }
+        ]
+      },

@@ -1,0 +1,194 @@
+ private static String getAgencyDetails(String json, String type) {
+
+        try {
+
+            List<Map<String, Object>> splitParts = JsonPath.read(json, "$.premiumSplit.splitParts[*]");
+
+            if (splitParts == null || splitParts.isEmpty()) {
+                return "";
+            }
+
+
+            if (type.equalsIgnoreCase("COMPENSATIONSCHEDULE") || type.equalsIgnoreCase("SUBAGENCIESID")) {
+
+                compensationIndex++;
+
+                if (compensationIndex >= splitParts.size()) {
+                    return "";
+                }
+            }
+
+            int currentIndex = compensationIndex < 0 ? 0 : compensationIndex;
+
+            if (currentIndex >= splitParts.size()) {
+                return "";
+            }
+
+            Map<String, Object> splitPart = splitParts.get(currentIndex);
+
+            List<Map<String, Object>> details = (List<Map<String, Object>>) splitPart.get("premiumSplitDetails");
+
+            if (details == null || details.isEmpty()) {
+                return "";
+            }
+
+            Map<String, Object> detail = details.get(0);
+
+            Map<String, Object> broker = (Map<String, Object>) detail.get("broker");
+
+            if (broker == null) {
+                return "";
+            }
+
+            Object compTypeObj = detail.get("compensationTypeCode");
+            String compType = compTypeObj == null ? "" : compTypeObj.toString();
+
+
+            String agencyCode = broker.get("agencyCode") == null ? "" : broker.get("agencyCode").toString();
+
+            String agentCode = broker.get("agentCode") == null ? "" : broker.get("agentCode").toString();
+
+            String agentName = broker.get("agentName") == null ? "" : broker.get("agentName").toString();
+
+            Map<String, Object> contract = (Map<String, Object>) detail.get("contractAssignment");
+
+            Map<String, Object> calc = contract == null ? null : (Map<String, Object>) contract.get("commissionCalculation");
+
+            Map<String, Object> rate = calc == null ? null : (Map<String, Object>) calc.get("commissionRate");
+
+            if (compType == null || compType.isEmpty()) {
+
+                if (type.equalsIgnoreCase("SUBAGENCIESID")) {
+                    return agentCode;
+                }
+
+                if (type.equalsIgnoreCase("SUBAGENTNAME")) {
+                    return normalize(agentName);
+                }
+
+                if (type.equalsIgnoreCase("EFFECTIVEDATE")) {
+                    Object value = broker.get("effectiveDate");
+                    return value == null ? "" : formatDate(value.toString());
+                }
+
+                if (type.equalsIgnoreCase("WRITINGAGENT")) {
+                    Object value = broker.get("isPrimary");
+                    return value == null ? "" : normalize(value.toString());
+                }
+                if (type.equalsIgnoreCase("SUBAGENCIESID")) {
+                    return agentCode;
+                }
+
+                if (type.equalsIgnoreCase("AgencyID")) {
+                    return normalize(agentCode);
+                }
+
+
+
+                if (type.equalsIgnoreCase("WRITINGAGENT")) {
+                    Object value = broker.get("isPrimary");
+                    return value == null ? "" : normalize(value.toString());
+                }
+            }
+
+
+            if (type.equalsIgnoreCase("COMPENSATIONSCHEDULE")) {
+                return compType.isEmpty() ? "" : normalize(compType);
+            } else if (type.equalsIgnoreCase("AGENCYID")) {
+                return normalize(agencyCode);
+            } else if (type.equalsIgnoreCase("AGENCYNAME")) {
+                Object value = broker.get("agencyName");
+                return value == null ? "" : normalize(value.toString());
+            } else if (type.equalsIgnoreCase("WRITINGAGENT")) {
+                Object value = broker.get("isPrimary");
+                return value == null ? "" : normalize(value.toString());
+            } else if (type.equalsIgnoreCase("RESPONSIBLEAGENT")) {
+                Object value = broker.get("isResponsibleAgent");
+                return value == null ? "" : normalize(value.toString());
+            } else if (type.equalsIgnoreCase("SHARE PERCENTAGE")) {
+                Object value = detail.get("compensationSplitParentAgencyPercent");
+                return value == null ? "" : value.toString();
+            } else if (type.equalsIgnoreCase("EFFECTIVEDATE")) {
+                Object value = broker.get("effectiveDate");
+                return value == null ? "" : formatDate(value.toString());
+            } else if (type.equalsIgnoreCase("COMP_RULE_TYPE")) {
+
+                if (calc == null) return "";
+
+                Object value = calc.get("type");
+
+                if (value != null && value.toString().toLowerCase().contains("heaped")) {
+                    return "Flat";
+                }
+
+                return value == null ? "" : normalize(value.toString());
+            } else if (type.equalsIgnoreCase("PLAN_CODE")) {
+
+                if (calc == null) return "";
+
+                Object value = calc.get("planCode");
+
+                return value == null ? "" : normalize(value.toString());
+            } else if (type.equalsIgnoreCase("COMPPERCENT")) {
+
+                if (rate == null) return "";
+
+                Object value = rate.get("rate");
+
+                return value == null ? "" : value.toString();
+            } else if (type.equalsIgnoreCase("STARTYEAR1")) {
+
+                if (calc != null && calc.get("type") != null && calc.get("type").toString().toLowerCase().contains("heaped")) {
+
+                    List<Map<String, Object>> bounds = (List<Map<String, Object>>) calc.get("bounds");
+
+                    if (bounds != null) {
+                        for (Map<String, Object> b : bounds) {
+
+                            if ("1".equals(String.valueOf(b.get("lower")))) {
+
+                                Object val = b.get("rate");
+                                return val == null ? "0" : val.toString();
+                            }
+                        }
+                    }
+                }
+                return "0";
+            } else if (type.equalsIgnoreCase("STARTYEAR2")) {
+
+                if (calc != null && calc.get("type") != null && calc.get("type").toString().toLowerCase().contains("heaped")) {
+
+                    List<Map<String, Object>> bounds = (List<Map<String, Object>>) calc.get("bounds");
+
+                    if (bounds != null) {
+                        for (Map<String, Object> b : bounds) {
+
+                            if ("2".equals(String.valueOf(b.get("lower")))) {
+
+                                Object val = b.get("rate");
+                                return val == null ? "0" : val.toString();
+                            }
+                        }
+                    }
+                }
+                return "0";
+            } else if (type.equalsIgnoreCase("APPROVEDSUBSIDYVENDOR")) {
+
+                if (rate == null) return "";
+
+                Object val = rate.get("producerApprovedSubsidyVendor");
+                return val == null ? "" : val.toString();
+            } else if (type.equalsIgnoreCase("CHARGETOCUSTOMER")) {
+
+                if (rate == null) return "";
+
+                Object val = rate.get("chargeToCustomerPercentage");
+                return val == null ? "" : val.toString();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return "";
+    }
