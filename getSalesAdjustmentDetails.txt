@@ -1,0 +1,88 @@
+private static String getSalesAdjustmentDetails(String json, String type){
+
+        try {
+
+            List<Map<String, Object>> plans = JsonPath.read(json, "$.rating.rateAggregate.ratePremium.policy.plans[*]");
+
+            if (plans == null || plans.isEmpty()) {
+                return "";
+            }
+
+            for (int i = 0; i < plans.size(); i++) {
+
+                String basePlanPath = "$.rating.rateAggregate.ratePremium.policy.plans[" + i + "]";
+                String planName = JsonPath.read(json, basePlanPath + ".planName");
+
+                List<Map<String, Object>> coverages = JsonPath.read(json, basePlanPath + ".coverages[*]");
+
+                if (coverages == null || coverages.isEmpty()) continue;
+
+                for (int j = 0; j < coverages.size(); j++) {
+
+                    String baseCoveragePath = basePlanPath + ".coverages[" + j + "]";
+
+                    String coverageType = JsonPath.read(json, baseCoveragePath + ".coverageType");
+
+                    String payableRateType;
+                    try {
+                        payableRateType = JsonPath.read(json, baseCoveragePath + ".payableRateType");
+                    } catch (Exception e) {
+                        payableRateType = null;
+                    }
+                    String payableRateType1 = "";
+                    if (payableRateType == null || payableRateType.equalsIgnoreCase("false") || payableRateType.equalsIgnoreCase("")) {
+
+                        payableRateType1 = "Composite";
+
+                    } else if (payableRateType.equalsIgnoreCase("true")) {
+
+                        payableRateType1 = "Step";
+                    }
+
+
+                    if (type.equalsIgnoreCase("Plan")) {
+                        return normalize(planName);
+                    }
+
+                    if (type.equalsIgnoreCase("Coverage")) {
+                        return normalize(coverageType);
+                    }
+
+                    if (type.equalsIgnoreCase("RateUpdateReason")) {
+                        return "Sales Adjustment";
+                    }
+
+
+                    if (type.equalsIgnoreCase("QuoteRateComposite") && "Composite".equalsIgnoreCase(payableRateType1)) {
+
+                        Object rate = JsonPath.read(json, baseCoveragePath + ".rateCard.rate");
+                        return rate == null ? "" : normalize(rate.toString());
+                    }
+
+//                    if (type.equalsIgnoreCase("QuoteRateAgeBand") && "Step".equalsIgnoreCase(payableRateType1)) {
+
+                    if (type.equalsIgnoreCase("QuoteRateAgeBand")) {
+
+                        List<Object> rates = JsonPath.read(json, baseCoveragePath + ".ageBands[*].rateCard.rate");
+
+                        if (rates == null || rates.isEmpty()) {
+                            return "";
+                        }
+                        ageBandIndex++;
+
+                        if (ageBandIndex >= rates.size()) {
+                            return "";
+                        }
+
+                        return normalize(rates.get(ageBandIndex).toString());
+
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return "";
+    }
