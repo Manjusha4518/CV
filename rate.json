@@ -1,0 +1,513 @@
+  "rating": {
+        "rateAggregate": {
+          "ratePremium": {
+            "policy": {
+              "manualRateCalcWorksheet": null,
+              "plans": [
+                {
+                  "coverages": [
+                    {
+                      "ageBands": [
+                        {
+                          "ageband": "18-24",
+                          "rateCard": {
+                            "rate": 0.07,
+                            "soldRate": null,
+                            "volume": null,
+                            "numberOfLives": 0,
+                            "adAndDny": null,
+                            "adAndDNonNy": null
+                          }
+                        },
+                        {
+                          "ageband": "25-29",
+                          "rateCard": {
+                            "rate": 0.1,
+                            "soldRate": null,
+                            "volume": null,
+                            "numberOfLives": 0,
+                            "adAndDny": null,
+                            "adAndDNonNy": null
+                          }
+                        },
+                        {
+                          "ageband": "30-34",
+                          "rateCard": {
+                            "rate": 0.18,
+                            "soldRate": null,
+                            "volume": null,
+                            "numberOfLives": 0,
+                            "adAndDny": null,
+                            "adAndDNonNy": null
+                          }
+                        },
+                        {
+                          "ageband": "35-39",
+                          "rateCard": {
+                            "rate": 0.25,
+                            "soldRate": null,
+                            "volume": null,
+                            "numberOfLives": 2,
+                            "adAndDny": null,
+                            "adAndDNonNy": null
+                          }
+                        },
+                        {
+                          "ageband": "40-44",
+                          "rateCard": {
+                            "rate": 0.3,
+                            "soldRate": null,
+                            "volume": null,
+                            "numberOfLives": 0,
+                            "adAndDny": null,
+                            "adAndDNonNy": null
+                          }
+                        },
+                        {
+                          "ageband": "45-49",
+                          "rateCard": {
+                            "rate": 0.35,
+                            "soldRate": null,
+                            "volume": null,
+                            "numberOfLives": 5,
+                            "adAndDny": null,
+                            "adAndDNonNy": null
+                          }
+                        },
+                        {
+                          "ageband": "50-54",
+                          "rateCard": {
+                            "rate": 0.35,
+                            "soldRate": null,
+                            "volume": null,
+                            "numberOfLives": 1,
+                            "adAndDny": null,
+                            "adAndDNonNy": null
+                          }
+                        },
+                        {
+                          "ageband": "55-59",
+                          "rateCard": {
+                            "rate": 0.35,
+                            "soldRate": null,
+                            "volume": null,
+                            "numberOfLives": 2,
+                            "adAndDny": null,
+                            "adAndDNonNy": null
+                          }
+                        },
+                        {
+                          "ageband": "60-64",
+                          "rateCard": {
+                            "rate": 0.35,
+                            "soldRate": null,
+                            "volume": null,
+                            "numberOfLives": 0,
+                            "adAndDny": null,
+                            "adAndDNonNy": null
+                          }
+                        },
+                        {
+                          "ageband": "65-69",
+                          "rateCard": {
+                            "rate": 0.35,
+                            "soldRate": null,
+                            "volume": null,
+                            "numberOfLives": 0,
+                            "adAndDny": null,
+                            "adAndDNonNy": null
+                          }
+                        },
+                        {
+                          "ageband": "70+",
+                          "rateCard": {
+                            "rate": 0.35,
+                            "soldRate": null,
+                            "volume": null,
+                            "numberOfLives": 0,
+                            "adAndDny": null,
+                            "adAndDNonNy": null
+                          }
+                        }
+                      ],
+                      "unitBands": [],
+                      "classes": [
+                        {
+                          "subGroup": null,
+                          "tiers": null,
+                          "classNumber": 1
+                        }
+                      ],
+                      "coverageCode": "Core",
+                      "coverageType": "Core",
+                      "rateCard": {
+                        "rate": 0.3296,
+                        "soldRate": null,
+                        "volume": 64093.46,
+                        "numberOfLives": 10,
+                        "adAndDny": null,
+                        "adAndDNonNy": null
+                      },
+                      "rateCardPremium": {
+                        "monthlyPremiumAmount": 211.25204416,
+                        "annualPremiumAmount": null,
+                        "modalPremiumAmount": null,
+                        "premiumHolderCode": null,
+                        "memberAnnualPremiumAmount": null,
+                        "dailyRateAmount": null,
+                        "memberDailyRateAmount": null,
+                        "sponsorDailyRateAmount": null,
+                        "sponsorModalPremiumAmount": null,
+                        "sponsorAnnualPremiumAmount": null,
+                        "memberModalPremiums": null
+                      },
+                      "subGroups": [],
+                      "rateBasis": null,
+                      "payableRateType": null
+                    }
+                  ],
+                  "classes": [
+                    {
+                      "classDescription": "Each Active Full Time",
+                      "classNumber": 1,
+                      "classRules": null,
+                      "classEligibility": {
+                        "individualReinstatementDate": "01",
+                        "individualReinstatementDateOther": null,
+                        "individualReinstatementTimePeriod": "06",
+                        "individualTerminationDate": "01",
+                        "individualTerminationDateOther": null,
+                        "individualTerminationSpecificDate": null,
+                        "presentEmployees": "FMC",
+                        "presentEmployeesSpecificDate": null,
+                        "ageChange": "03",
+                        "ageChangeOther": " ",
+                        "ageChangeSpecificDateMonth": "01",
+                        "ageChangeSpecificDateDay": 1,
+                        "classChange": "02",
+                        "classChangeOther": " ",
+                        "classChangeSpecificDateMonth": null,
+                        "classChangeSpecificDateDay": null,
+                        "diff": true,
+                        "earningsChange": "02",
+                        "earningsChangeOther": " ",
+                        "earningsChangeSpecificDateMonth": "01",
+                        "earningsChangeSpecificDateDay": 1,
+                        "futureEmployees": null,
+                        "futureEmployeesSpecificDate": null,
+                        "individualDifferentiation": false,
+                        "willChanges": false
+                      },
+                      "earningsDefinition": {
+                        "definition": "standardHourly",
+                        "earningsDefinitionOther": null,
+                        "earningsDetermination": "firstofPolicyMonth",
+                        "other": null,
+                        "planIncludes401K403BORSection125": "401KandSection125",
+                        "w2Includes": null,
+                        "w2IncludesOther": null,
+                        "averageOnPeriod": null,
+                        "averageOnPeriodValue": null,
+                        "averageOnSelect": null,
+                        "averagingAppliesTo": null,
+                        "averagingAppliesToOther": " ",
+                        "date": null,
+                        "averageOnSelectOther": null
+                      },
+                      "employeeOrOther": "Other",
+                      "fullTimeHours": 40,
+                      "fullTimeOther": null,
+                      "other": " ",
+                      "otherEmployeeInfo": "Employee electing 40% benefit",
+                      "partTimeHours": 0,
+                      "partTimeOther": null,
+                      "areEmployeesExcluded": false,
+                      "excludedEmployees": " ",
+                      "waitingPeriod": {
+                        "presentCountPeriods": "30",
+                        "servicePresentFuture": false,
+                        "presentSecondCountPeriods": "0",
+                        "presentSecondWaitingPeriod": "NONE",
+                        "presentWaitingPeriod": "Days",
+                        "serviceWaitingPeriod": "NO_DIFFERENTIATION",
+                        "futureWaitingPeriodLabel1": null,
+                        "futureWaitingPeriodLabel2": null,
+                        "presentWaitingPeriodLabel1": null,
+                        "presentWaitingPeriodLabel2": null,
+                        "presentWaitingPeriodOther": null,
+                        "serviceWaitingPeriodOther": null,
+                        "presentWaitingPeriodSecondOther": null,
+                        "futureWaitingPeriod": "Days",
+                        "futureCountPeriod": 30,
+                        "futureWaitingPeriodOther": null,
+                        "futureSecondWaitingPeriod": "None",
+                        "futureSecondCountPeriod": 0,
+                        "futureWaitingPeriodSecondOther": null
+                      }
+                    }
+                  ],
+                  "planName": "VPL Plan 1"
+                },
+                {
+                  "coverages": [
+                    {
+                      "ageBands": [
+                        {
+                          "ageband": "18-24",
+                          "rateCard": {
+                            "rate": 0.09,
+                            "soldRate": null,
+                            "volume": null,
+                            "numberOfLives": 0,
+                            "adAndDny": null,
+                            "adAndDNonNy": null
+                          }
+                        },
+                        {
+                          "ageband": "25-29",
+                          "rateCard": {
+                            "rate": 0.25,
+                            "soldRate": null,
+                            "volume": null,
+                            "numberOfLives": 1,
+                            "adAndDny": null,
+                            "adAndDNonNy": null
+                          }
+                        },
+                        {
+                          "ageband": "30-34",
+                          "rateCard": {
+                            "rate": 0.34,
+                            "soldRate": null,
+                            "volume": null,
+                            "numberOfLives": 0,
+                            "adAndDny": null,
+                            "adAndDNonNy": null
+                          }
+                        },
+                        {
+                          "ageband": "35-39",
+                          "rateCard": {
+                            "rate": 0.55,
+                            "soldRate": null,
+                            "volume": null,
+                            "numberOfLives": 3,
+                            "adAndDny": null,
+                            "adAndDNonNy": null
+                          }
+                        },
+                        {
+                          "ageband": "40-44",
+                          "rateCard": {
+                            "rate": 0.85,
+                            "soldRate": null,
+                            "volume": null,
+                            "numberOfLives": 3,
+                            "adAndDny": null,
+                            "adAndDNonNy": null
+                          }
+                        },
+                        {
+                          "ageband": "45-49",
+                          "rateCard": {
+                            "rate": 1.02,
+                            "soldRate": null,
+                            "volume": null,
+                            "numberOfLives": 1,
+                            "adAndDny": null,
+                            "adAndDNonNy": null
+                          }
+                        },
+                        {
+                          "ageband": "50-54",
+                          "rateCard": {
+                            "rate": 1.02,
+                            "soldRate": null,
+                            "volume": null,
+                            "numberOfLives": 1,
+                            "adAndDny": null,
+                            "adAndDNonNy": null
+                          }
+                        },
+                        {
+                          "ageband": "55-59",
+                          "rateCard": {
+                            "rate": 1.02,
+                            "soldRate": null,
+                            "volume": null,
+                            "numberOfLives": 3,
+                            "adAndDny": null,
+                            "adAndDNonNy": null
+                          }
+                        },
+                        {
+                          "ageband": "60-64",
+                          "rateCard": {
+                            "rate": 1.02,
+                            "soldRate": null,
+                            "volume": null,
+                            "numberOfLives": 2,
+                            "adAndDny": null,
+                            "adAndDNonNy": null
+                          }
+                        },
+                        {
+                          "ageband": "65-69",
+                          "rateCard": {
+                            "rate": 1.02,
+                            "soldRate": null,
+                            "volume": null,
+                            "numberOfLives": 1,
+                            "adAndDny": null,
+                            "adAndDNonNy": null
+                          }
+                        },
+                        {
+                          "ageband": "70+",
+                          "rateCard": {
+                            "rate": 1.02,
+                            "soldRate": null,
+                            "volume": null,
+                            "numberOfLives": 1,
+                            "adAndDny": null,
+                            "adAndDNonNy": null
+                          }
+                        }
+                      ],
+                      "unitBands": [],
+                      "classes": [
+                        {
+                          "subGroup": null,
+                          "tiers": null,
+                          "classNumber": 2
+                        }
+                      ],
+                      "coverageCode": "Core",
+                      "coverageType": "Core",
+                      "rateCard": {
+                        "rate": 0.8817,
+                        "soldRate": null,
+                        "volume": 90495.99,
+                        "numberOfLives": 16,
+                        "adAndDny": null,
+                        "adAndDNonNy": null
+                      },
+                      "rateCardPremium": {
+                        "monthlyPremiumAmount": 797.90314383,
+                        "annualPremiumAmount": null,
+                        "modalPremiumAmount": null,
+                        "premiumHolderCode": null,
+                        "memberAnnualPremiumAmount": null,
+                        "dailyRateAmount": null,
+                        "memberDailyRateAmount": null,
+                        "sponsorDailyRateAmount": null,
+                        "sponsorModalPremiumAmount": null,
+                        "sponsorAnnualPremiumAmount": null,
+                        "memberModalPremiums": null
+                      },
+                      "subGroups": [],
+                      "rateBasis": null,
+                      "payableRateType": null
+                    }
+                  ],
+                  "classes": [
+                    {
+                      "classDescription": "Each Active Full Time",
+                      "classNumber": 2,
+                      "classRules": null,
+                      "classEligibility": {
+                        "individualReinstatementDate": "01",
+                        "individualReinstatementDateOther": null,
+                        "individualReinstatementTimePeriod": "06",
+                        "individualTerminationDate": "01",
+                        "individualTerminationDateOther": null,
+                        "individualTerminationSpecificDate": null,
+                        "presentEmployees": "FMC",
+                        "presentEmployeesSpecificDate": null,
+                        "ageChange": "03",
+                        "ageChangeOther": " ",
+                        "ageChangeSpecificDateMonth": "01",
+                        "ageChangeSpecificDateDay": 1,
+                        "classChange": "02",
+                        "classChangeOther": " ",
+                        "classChangeSpecificDateMonth": null,
+                        "classChangeSpecificDateDay": null,
+                        "diff": true,
+                        "earningsChange": "02",
+                        "earningsChangeOther": " ",
+                        "earningsChangeSpecificDateMonth": "01",
+                        "earningsChangeSpecificDateDay": 1,
+                        "futureEmployees": null,
+                        "futureEmployeesSpecificDate": null,
+                        "individualDifferentiation": false,
+                        "willChanges": false
+                      },
+                      "earningsDefinition": {
+                        "definition": "standardHourly",
+                        "earningsDefinitionOther": null,
+                        "earningsDetermination": "firstofPolicyMonth",
+                        "other": null,
+                        "planIncludes401K403BORSection125": "401KandSection125",
+                        "w2Includes": null,
+                        "w2IncludesOther": null,
+                        "averageOnPeriod": null,
+                        "averageOnPeriodValue": null,
+                        "averageOnSelect": null,
+                        "averagingAppliesTo": null,
+                        "averagingAppliesToOther": " ",
+                        "date": null,
+                        "averageOnSelectOther": null
+                      },
+                      "employeeOrOther": "Other",
+                      "fullTimeHours": 29,
+                      "fullTimeOther": null,
+                      "other": " ",
+                      "otherEmployeeInfo": "Employee electing 60% benefit",
+                      "partTimeHours": 0,
+                      "partTimeOther": null,
+                      "areEmployeesExcluded": false,
+                      "excludedEmployees": " ",
+                      "waitingPeriod": {
+                        "presentCountPeriods": "30",
+                        "servicePresentFuture": false,
+                        "presentSecondCountPeriods": "0",
+                        "presentSecondWaitingPeriod": "NONE",
+                        "presentWaitingPeriod": "Days",
+                        "serviceWaitingPeriod": "NO_DIFFERENTIATION",
+                        "futureWaitingPeriodLabel1": null,
+                        "futureWaitingPeriodLabel2": null,
+                        "presentWaitingPeriodLabel1": null,
+                        "presentWaitingPeriodLabel2": null,
+                        "presentWaitingPeriodOther": null,
+                        "serviceWaitingPeriodOther": null,
+                        "presentWaitingPeriodSecondOther": null,
+                        "futureWaitingPeriod": "Days",
+                        "futureCountPeriod": 30,
+                        "futureWaitingPeriodOther": null,
+                        "futureSecondWaitingPeriod": "None",
+                        "futureSecondCountPeriod": 0,
+                        "futureWaitingPeriodSecondOther": null
+                      }
+                    }
+                  ],
+                  "planName": "VPL Plan 2"
+                }
+              ],
+              "ratingDetails": null,
+              "rateCardPremium": {
+                "monthlyPremiumAmount": null,
+                "annualPremiumAmount": null,
+                "modalPremiumAmount": null,
+                "premiumHolderCode": null,
+                "memberAnnualPremiumAmount": null,
+                "dailyRateAmount": null,
+                "memberDailyRateAmount": null,
+                "sponsorDailyRateAmount": null,
+                "sponsorModalPremiumAmount": null,
+                "sponsorAnnualPremiumAmount": null,
+                "memberModalPremiums": null
+              }
+            }
+          }
+        }
+      },
