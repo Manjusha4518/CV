@@ -1,0 +1,1333 @@
+package cv.StepDefinition;
+
+import cv.Utilities.CsvUtil;
+import cv.Utilities.ExtentManager;
+
+import com.aventstack.extentreports.ExtentReports;
+import com.aventstack.extentreports.ExtentTest;
+
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.When;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+
+import org.testng.asserts.SoftAssert;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class TaskComparisonSteps {
+
+    private WebDriver driver;
+
+    /*
+     * Use your existing driver initialization here.
+     *
+     * If your project already has Base / Driver class,
+     * replace this with your existing driver object.
+     */
+    // private Base base;
+    // private ClaimPage cp;
+
+    private ExtentReports extent;
+
+    /*
+     * ============================================================
+     * LOCATORS
+     * ============================================================
+     *
+     * YOU SAID YOU WILL ADD THE LOCATORS.
+     *
+     * Replace these By locators with your actual locators.
+     */
+
+    private By claimSearchBox =
+            By.xpath("YOUR_CLAIM_SEARCH_LOCATOR");
+
+    private By claimSearchButton =
+            By.xpath("YOUR_CLAIM_SEARCH_BUTTON_LOCATOR");
+
+    private By viewAllButton =
+            By.xpath("YOUR_VIEW_ALL_LOCATOR");
+
+
+    /*
+     * UI TASK LOCATORS
+     *
+     * These should identify EACH task card/record.
+     */
+
+    private By taskCards =
+            By.xpath("YOUR_TASK_CARD_LOCATOR");
+
+
+    /*
+     * Fields inside one task card
+     */
+
+    private By subject =
+            By.xpath(".//YOUR_SUBJECT_LOCATOR");
+
+    private By primaryName =
+            By.xpath(".//YOUR_PRIMARY_NAME_LOCATOR");
+
+    private By dueDate =
+            By.xpath(".//YOUR_DUE_DATE_LOCATOR");
+
+    private By assignedTo =
+            By.xpath(".//YOUR_ASSIGNED_TO_LOCATOR");
+
+    private By lastModifiedDate =
+            By.xpath(".//YOUR_LAST_MODIFIED_DATE_LOCATOR");
+
+    private By comments =
+            By.xpath(".//YOUR_COMMENTS_LOCATOR");
+
+
+    /*
+     * ============================================================
+     * CSV FILE
+     * ============================================================
+     */
+
+    private final String csvFilePath =
+            System.getProperty("user.dir")
+                    + "/testData/TaskUploader/tasks.csv";
+
+
+    /*
+     * ============================================================
+     * STEP
+     * ============================================================
+     */
+
+    @Given("User login CV {int} times")
+    public void userLoginCV(int times) {
+
+        /*
+         * Keep your existing login code here.
+         *
+         * Example:
+         *
+         * base.login();
+         */
+    }
+
+
+    @When("User compares Disability Claim task data with UI")
+    public void compareDisabilityClaimTaskDataWithUI() {
+
+        /*
+         * ========================================================
+         * 1. READ CSV
+         * ========================================================
+         */
+
+        List<Map<String, String>> csvRows =
+                CsvUtil.getCsvData(csvFilePath);
+
+
+        if (csvRows == null || csvRows.isEmpty()) {
+
+            throw new RuntimeException(
+                    "No records found in CSV: "
+                            + csvFilePath
+            );
+        }
+
+
+        System.out.println(
+                "Total CSV Records = "
+                        + csvRows.size()
+        );
+
+
+        /*
+         * ========================================================
+         * 2. GROUP CSV RECORDS BY CLAIM NUMBER
+         * ========================================================
+         *
+         * IMPORTANT:
+         *
+         * Claim Number may appear multiple times because
+         * every task is a separate CSV record.
+         *
+         * Example:
+         *
+         * Claim 123
+         * Task 1
+         * Task 2
+         * Task 3
+         *
+         * Claim is searched ONLY ONCE.
+         */
+
+        Map<String, List<Map<String, String>>>
+                claimTaskMap =
+                new LinkedHashMap<>();
+
+
+        for (Map<String, String> row : csvRows) {
+
+            String claimNumber =
+                    getCsvValue(
+                            row,
+                            "Claim Number"
+                    );
+
+
+            if (claimNumber == null
+                    || claimNumber.trim().isEmpty()) {
+
+                continue;
+            }
+
+
+            claimNumber =
+                    normalize(claimNumber);
+
+
+            claimTaskMap
+                    .computeIfAbsent(
+                            claimNumber,
+                            k -> new ArrayList<>()
+                    )
+                    .add(row);
+        }
+
+
+        System.out.println(
+                "Total Claims = "
+                        + claimTaskMap.size()
+        );
+
+
+        /*
+         * ========================================================
+         * 3. CREATE EXTENT REPORT
+         * ========================================================
+         *
+         * USE YOUR EXISTING ExtentManager.
+         */
+
+        String reportFolder =
+                System.getProperty("user.dir")
+                        + "/testResult/TaskComparison";
+
+
+        extent =
+                ExtentManager.getInstance(
+                        reportFolder
+                );
+
+
+        /*
+         * ========================================================
+         * 4. PROCESS EACH CLAIM
+         * ========================================================
+         */
+
+        for (Map.Entry<String,
+                List<Map<String, String>>> claimEntry
+                : claimTaskMap.entrySet()) {
+
+
+            String claimNumber =
+                    claimEntry.getKey();
+
+
+            List<Map<String, String>>
+                    expectedTasks =
+                    claimEntry.getValue();
+
+
+            /*
+             * One Extent test for one claim
+             */
+
+            ExtentTest claimTest =
+                    extent.createTest(
+                            "Claim Number : "
+                                    + claimNumber
+                    );
+
+
+            try {
+
+                claimTest.info(
+                        "CSV Task Count : "
+                                + expectedTasks.size()
+                );
+
+
+                /*
+                 * =================================================
+                 * 5. SEARCH CLAIM
+                 * =================================================
+                 *
+                 * CLAIM NUMBER ENTERED ONLY ONCE.
+                 */
+
+                searchClaim(claimNumber);
+
+
+                claimTest.pass(
+                        "Claim searched successfully : "
+                                + claimNumber
+                );
+
+
+                /*
+                 * =================================================
+                 * 6. CLICK VIEW ALL
+                 * =================================================
+                 */
+
+                clickViewAll();
+
+
+                claimTest.info(
+                        "Clicked View All to display all tasks."
+                );
+
+
+                /*
+                 * =================================================
+                 * 7. HANDLE TASK WINDOW
+                 * =================================================
+                 */
+
+                switchToTaskWindow();
+
+
+                /*
+                 * =================================================
+                 * 8. GET UI TASKS
+                 * =================================================
+                 */
+
+                List<WebElement> uiTaskCards =
+                        driver.findElements(taskCards);
+
+
+                int uiTaskCount =
+                        uiTaskCards.size();
+
+
+                claimTest.info(
+                        "CSV Task Count : "
+                                + expectedTasks.size()
+                );
+
+                claimTest.info(
+                        "UI Task Count : "
+                                + uiTaskCount
+                );
+
+
+                /*
+                 * =================================================
+                 * TASK COUNT VALIDATION
+                 * =================================================
+                 */
+
+                if (expectedTasks.size()
+                        == uiTaskCount) {
+
+                    claimTest.pass(
+                            "Task Count Validation PASSED"
+                                    + "<br>CSV Task Count : "
+                                    + expectedTasks.size()
+                                    + "<br>UI Task Count : "
+                                    + uiTaskCount
+                    );
+
+                } else {
+
+                    claimTest.fail(
+                            "Task Count Validation FAILED"
+                                    + "<br>CSV Task Count : "
+                                    + expectedTasks.size()
+                                    + "<br>UI Task Count : "
+                                    + uiTaskCount
+                    );
+                }
+
+
+                /*
+                 * =================================================
+                 * 9. FIELD LEVEL VALIDATION
+                 * =================================================
+                 */
+
+                validateTasks(
+                        claimTest,
+                        expectedTasks,
+                        uiTaskCards
+                );
+
+
+            } catch (Exception e) {
+
+                claimTest.fail(
+                        "Claim processing failed : "
+                                + e.getMessage()
+                );
+
+            } finally {
+
+                /*
+                 * Return to original claim window.
+                 */
+
+                switchToOriginalWindow();
+            }
+        }
+
+
+        /*
+         * ========================================================
+         * FLUSH REPORT
+         * ========================================================
+         */
+
+        extent.flush();
+    }
+
+
+    // ============================================================
+    // SEARCH CLAIM
+    // ============================================================
+
+    private void searchClaim(
+            String claimNumber) {
+
+        WebElement searchBox =
+                driver.findElement(
+                        claimSearchBox
+                );
+
+
+        searchBox.clear();
+
+        searchBox.sendKeys(
+                claimNumber
+        );
+
+
+        driver.findElement(
+                claimSearchButton
+        ).click();
+
+
+        waitForPage();
+    }
+
+
+    // ============================================================
+    // CLICK VIEW ALL
+    // ============================================================
+
+    private void clickViewAll() {
+
+        driver.findElement(
+                viewAllButton
+        ).click();
+
+
+        waitForPage();
+    }
+
+
+    // ============================================================
+    // SWITCH TO NEW WINDOW
+    // ============================================================
+
+    private void switchToTaskWindow() {
+
+        String originalWindow =
+                driver.getWindowHandle();
+
+
+        Set<String> oldWindows =
+                driver.getWindowHandles();
+
+
+        /*
+         * Wait for new window.
+         */
+
+        long start =
+                System.currentTimeMillis();
+
+
+        while (System.currentTimeMillis()
+                - start < 15000) {
+
+
+            Set<String> currentWindows =
+                    driver.getWindowHandles();
+
+
+            if (currentWindows.size()
+                    > oldWindows.size()) {
+
+
+                for (String window :
+                        currentWindows) {
+
+                    if (!oldWindows.contains(window)) {
+
+                        driver.switchTo()
+                                .window(window);
+
+                        return;
+                    }
+                }
+            }
+
+
+            try {
+
+                Thread.sleep(500);
+
+            } catch (InterruptedException e) {
+
+                Thread.currentThread()
+                        .interrupt();
+            }
+        }
+
+
+        /*
+         * Sometimes View All does NOT open a new
+         * browser window.
+         *
+         * In that case remain on current window.
+         */
+
+        driver.switchTo()
+                .window(originalWindow);
+    }
+
+
+    // ============================================================
+    // VALIDATE ALL TASKS
+    // ============================================================
+
+    private void validateTasks(
+            ExtentTest claimTest,
+            List<Map<String, String>> csvTasks,
+            List<WebElement> uiTasks) {
+
+
+        int commonCount =
+                Math.min(
+                        csvTasks.size(),
+                        uiTasks.size()
+                );
+
+
+        /*
+         * ========================================================
+         * COMPARE EACH TASK
+         * ========================================================
+         */
+
+        for (int i = 0;
+             i < commonCount;
+             i++) {
+
+
+            Map<String, String> csvTask =
+                    csvTasks.get(i);
+
+
+            WebElement uiTask =
+                    uiTasks.get(i);
+
+
+            ExtentTest taskNode =
+                    claimTest.createNode(
+                            "Task "
+                                    + (i + 1)
+                    );
+
+
+            taskNode.info(
+                    "CSV Task Record : "
+                            + (i + 1)
+            );
+
+
+            /*
+             * Read UI values
+             */
+
+            Map<String, String> uiData =
+                    readUiTask(uiTask);
+
+
+            /*
+             * Decode Comments
+             */
+
+            Map<String, String>
+                    commentData =
+                    decodeComments(
+                            uiData.get("Comments")
+                    );
+
+
+            /*
+             * Add decoded values to UI map
+             */
+
+            uiData.putAll(
+                    commentData
+            );
+
+
+            /*
+             * ====================================================
+             * FIELD VALIDATION
+             * ====================================================
+             */
+
+            validateField(
+                    taskNode,
+                    csvTask,
+                    uiData,
+                    "Subject"
+            );
+
+
+            validateField(
+                    taskNode,
+                    csvTask,
+                    uiData,
+                    "Primary Name"
+            );
+
+
+            validateField(
+                    taskNode,
+                    csvTask,
+                    uiData,
+                    "Due Date"
+            );
+
+
+            validateField(
+                    taskNode,
+                    csvTask,
+                    uiData,
+                    "Assigned To"
+            );
+
+
+            validateField(
+                    taskNode,
+                    csvTask,
+                    uiData,
+                    "Last Modified Date"
+            );
+
+
+            /*
+             * Comment-derived fields
+             */
+
+            validateField(
+                    taskNode,
+                    csvTask,
+                    uiData,
+                    "Workcell"
+            );
+
+
+            validateField(
+                    taskNode,
+                    csvTask,
+                    uiData,
+                    "Task Type"
+            );
+
+
+            validateField(
+                    taskNode,
+                    csvTask,
+                    uiData,
+                    "Details"
+            );
+
+
+            validateField(
+                    taskNode,
+                    csvTask,
+                    uiData,
+                    "Completed Date"
+            );
+        }
+
+
+        /*
+         * ========================================================
+         * MISSING UI TASKS
+         * ========================================================
+         */
+
+        if (csvTasks.size()
+                > uiTasks.size()) {
+
+
+            for (int i =
+                         uiTasks.size();
+                 i < csvTasks.size();
+                 i++) {
+
+
+                ExtentTest missingTask =
+                        claimTest.createNode(
+                                "Missing UI Task "
+                                        + (i + 1)
+                        );
+
+
+                missingTask.fail(
+                        "Task exists in CSV but NOT in UI."
+                                + "<br>CSV Record : "
+                                + (i + 1)
+                );
+
+
+                /*
+                 * Print all CSV fields
+                 */
+
+                for (Map.Entry<String, String> entry :
+                        csvTasks.get(i).entrySet()) {
+
+                    missingTask.info(
+                            entry.getKey()
+                                    + " = "
+                                    + entry.getValue()
+                    );
+                }
+            }
+        }
+
+
+        /*
+         * ========================================================
+         * EXTRA UI TASKS
+         * ========================================================
+         */
+
+        if (uiTasks.size()
+                > csvTasks.size()) {
+
+
+            for (int i =
+                         csvTasks.size();
+                 i < uiTasks.size();
+                 i++) {
+
+
+                ExtentTest extraTask =
+                        claimTest.createNode(
+                                "Extra UI Task "
+                                        + (i + 1)
+                        );
+
+
+                extraTask.fail(
+                        "Task exists in UI but NOT in CSV."
+                );
+
+
+                Map<String, String> uiData =
+                        readUiTask(
+                                uiTasks.get(i)
+                        );
+
+
+                for (Map.Entry<String, String> entry :
+                        uiData.entrySet()) {
+
+                    extraTask.info(
+                            entry.getKey()
+                                    + " = "
+                                    + entry.getValue()
+                    );
+                }
+            }
+        }
+    }
+
+
+    // ============================================================
+    // READ UI TASK
+    // ============================================================
+
+    private Map<String, String> readUiTask(
+            WebElement taskCard) {
+
+
+        Map<String, String> data =
+                new LinkedHashMap<>();
+
+
+        data.put(
+                "Subject",
+                getText(
+                        taskCard,
+                        subject
+                )
+        );
+
+
+        data.put(
+                "Primary Name",
+                getText(
+                        taskCard,
+                        primaryName
+                )
+        );
+
+
+        data.put(
+                "Due Date",
+                getText(
+                        taskCard,
+                        dueDate
+                )
+        );
+
+
+        data.put(
+                "Assigned To",
+                getText(
+                        taskCard,
+                        assignedTo
+                )
+        );
+
+
+        data.put(
+                "Last Modified Date",
+                getText(
+                        taskCard,
+                        lastModifiedDate
+                )
+        );
+
+
+        data.put(
+                "Comments",
+                getText(
+                        taskCard,
+                        comments
+                )
+        );
+
+
+        return data;
+    }
+
+
+    // ============================================================
+    // GET TEXT FROM TASK CARD
+    // ============================================================
+
+    private String getText(
+            WebElement parent,
+            By locator) {
+
+
+        try {
+
+            WebElement element =
+                    parent.findElement(
+                            locator
+                    );
+
+
+            return normalize(
+                    element.getText()
+            );
+
+        } catch (Exception e) {
+
+            return "";
+        }
+    }
+
+
+    // ============================================================
+    // DECODE COMMENTS
+    // ============================================================
+
+    private Map<String, String>
+    decodeComments(String comment) {
+
+
+        Map<String, String> data =
+                new LinkedHashMap<>();
+
+
+        if (comment == null) {
+
+            return data;
+        }
+
+
+        String text =
+                comment
+                        .replace("&nbsp;", " ")
+                        .replace("<p>", " ")
+                        .replace("</p>", " ")
+                        .replace("<br>", " ")
+                        .replace("<br/>", " ")
+                        .replace("<br />", " ")
+                        .replaceAll(
+                                "<[^>]*>",
+                                " "
+                        );
+
+
+        text =
+                normalize(text);
+
+
+        /*
+         * ========================================================
+         * WORKCELL
+         *
+         * Example:
+         *
+         * Assign To: WORKCELL-CE-LTD -> 426rtj
+         * ========================================================
+         */
+
+        String workcell =
+                extract(
+                        text,
+                        "Assign\\s*To\\s*:\\s*([^\\-]+(?:-[^\\s]+)*)\\s*->"
+                );
+
+
+        if (workcell.isEmpty()) {
+
+            workcell =
+                    extract(
+                            text,
+                            "Assign\\s*To\\s*:\\s*(.*?)\\s*->"
+                    );
+        }
+
+
+        data.put(
+                "Workcell",
+                normalize(workcell)
+        );
+
+
+        /*
+         * ========================================================
+         * TASK TYPE
+         *
+         * Example:
+         *
+         * Task Type: Regular Task
+         * ========================================================
+         */
+
+        String taskType =
+                extract(
+                        text,
+                        "Task\\s*Type\\s*:\\s*(.*?)(?=Details\\s*:|Completed\\s*Date\\s*:|$)"
+                );
+
+
+        data.put(
+                "Task Type",
+                normalize(taskType)
+        );
+
+
+        /*
+         * ========================================================
+         * DETAILS
+         * ========================================================
+         */
+
+        String details =
+                extract(
+                        text,
+                        "Details\\s*:\\s*(.*?)(?=Completed\\s*Date\\s*:|$)"
+                );
+
+
+        data.put(
+                "Details",
+                normalize(details)
+        );
+
+
+        /*
+         * ========================================================
+         * COMPLETED DATE
+         *
+         * Example:
+         *
+         * Completed Date: 05/26/26
+         * ========================================================
+         */
+
+        String completedDate =
+                extract(
+                        text,
+                        "Completed\\s*Date\\s*:\\s*(.*?)(?=$)"
+                );
+
+
+        data.put(
+                "Completed Date",
+                normalize(completedDate)
+        );
+
+
+        return data;
+    }
+
+
+    // ============================================================
+    // REGEX EXTRACTION
+    // ============================================================
+
+    private String extract(
+            String text,
+            String regex) {
+
+
+        try {
+
+            Pattern pattern =
+                    Pattern.compile(
+                            regex,
+                            Pattern.CASE_INSENSITIVE
+                    );
+
+
+            Matcher matcher =
+                    pattern.matcher(text);
+
+
+            if (matcher.find()) {
+
+                return matcher.group(1);
+            }
+
+
+        } catch (Exception e) {
+
+            System.out.println(
+                    "Regex error : "
+                            + regex
+            );
+        }
+
+
+        return "";
+    }
+
+
+    // ============================================================
+    // FIELD VALIDATION
+    // ============================================================
+
+    private void validateField(
+            ExtentTest taskNode,
+            Map<String, String> csvData,
+            Map<String, String> uiData,
+            String fieldName) {
+
+
+        String expected =
+                getCsvValue(
+                        csvData,
+                        fieldName
+                );
+
+
+        String actual =
+                uiData.get(fieldName);
+
+
+        if (actual == null) {
+
+            actual = "";
+        }
+
+
+        expected =
+                normalize(expected);
+
+
+        actual =
+                normalize(actual);
+
+
+        /*
+         * Date normalization can be added here
+         * if CSV and UI use different formats.
+         */
+
+        boolean matched =
+                expected.equalsIgnoreCase(
+                        actual
+                );
+
+
+        if (matched) {
+
+            taskNode.pass(
+                    "<b>"
+                            + fieldName
+                            + "</b>"
+                            + "<br>Expected : "
+                            + expected
+                            + "<br>Actual : "
+                            + actual
+                            + "<br>Status : PASS"
+            );
+
+        } else {
+
+            taskNode.fail(
+                    "<b>"
+                            + fieldName
+                            + "</b>"
+                            + "<br>Expected : "
+                            + expected
+                            + "<br>Actual : "
+                            + actual
+                            + "<br>Status : FAIL"
+            );
+        }
+    }
+
+
+    // ============================================================
+    // GET CSV VALUE
+    // ============================================================
+
+    private String getCsvValue(
+            Map<String, String> row,
+            String fieldName) {
+
+
+        if (row == null) {
+
+            return "";
+        }
+
+
+        /*
+         * Direct match
+         */
+
+        if (row.containsKey(fieldName)) {
+
+            return row.get(fieldName);
+        }
+
+
+        /*
+         * Case-insensitive match
+         */
+
+        for (Map.Entry<String, String> entry :
+                row.entrySet()) {
+
+
+            if (entry.getKey()
+                    .equalsIgnoreCase(fieldName)) {
+
+                return entry.getValue();
+            }
+        }
+
+
+        /*
+         * ========================================================
+         * CSV FIELD MAPPING
+         * ========================================================
+         *
+         * Add your actual CSV column mappings here.
+         */
+
+        if (fieldName.equalsIgnoreCase(
+                "Workcell")) {
+
+            return findCsvValue(
+                    row,
+                    "Description"
+            );
+        }
+
+
+        if (fieldName.equalsIgnoreCase(
+                "Task Type")) {
+
+            return findCsvValue(
+                    row,
+                    "Task Type"
+            );
+        }
+
+
+        if (fieldName.equalsIgnoreCase(
+                "Due Date")) {
+
+            return findCsvValue(
+                    row,
+                    "Due Date"
+            );
+        }
+
+
+        if (fieldName.equalsIgnoreCase(
+                "Assigned To")) {
+
+            return findCsvValue(
+                    row,
+                    "Assigned To"
+            );
+        }
+
+
+        if (fieldName.equalsIgnoreCase(
+                "Details")) {
+
+            return findCsvValue(
+                    row,
+                    "Forwarded Details"
+            );
+        }
+
+
+        return "";
+    }
+
+
+    // ============================================================
+    // FIND CSV COLUMN
+    // ============================================================
+
+    private String findCsvValue(
+            Map<String, String> row,
+            String columnName) {
+
+
+        for (Map.Entry<String, String> entry :
+                row.entrySet()) {
+
+
+            if (entry.getKey()
+                    .equalsIgnoreCase(
+                            columnName
+                    )) {
+
+                return entry.getValue();
+            }
+        }
+
+
+        return "";
+    }
+
+
+    // ============================================================
+    // NORMALIZE
+    // ============================================================
+
+    private String normalize(
+            String value) {
+
+
+        if (value == null) {
+
+            return "";
+        }
+
+
+        return value
+                .replace("\u00A0", " ")
+                .replace("&nbsp;", " ")
+                .replaceAll(
+                        "\\s+",
+                        " "
+                )
+                .trim();
+    }
+
+
+    // ============================================================
+    // WAIT
+    // ============================================================
+
+    private void waitForPage() {
+
+        try {
+
+            Thread.sleep(2000);
+
+        } catch (InterruptedException e) {
+
+            Thread.currentThread()
+                    .interrupt();
+        }
+    }
+
+
+    // ============================================================
+    // RETURN TO ORIGINAL WINDOW
+    // ============================================================
+
+    private void switchToOriginalWindow() {
+
+        try {
+
+            Set<String> handles =
+                    driver.getWindowHandles();
+
+
+            if (!handles.isEmpty()) {
+
+                driver.switchTo()
+                        .window(
+                                handles.iterator()
+                                        .next()
+                        );
+            }
+
+        } catch (Exception e) {
+
+            System.out.println(
+                    "Unable to switch to original window: "
+                            + e.getMessage()
+            );
+        }
+    }
+}
