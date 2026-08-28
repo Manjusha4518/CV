@@ -1,0 +1,654 @@
+package cv.Utilities;
+
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.MalformedInputException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+public class CsvUtil {
+
+    /**
+     * Reads complete CSV file.
+     *
+     * Return:
+     *
+     * List<Map<String,String>>
+     *
+     * Every CSV record = one Map
+     *
+     * Example:
+     *
+     * Claim Number | Subject   | Due Date
+     * CLM001       | PACS Task | 05/26/2026
+     * CLM001       | PACS Task | 05/19/2026
+     *
+     * Each row remains a separate task.
+     */
+    public static List<Map<String, String>> getCSVData(
+            String filePath) {
+
+        List<Map<String, String>> csvData =
+                new ArrayList<>();
+
+        Path path = Paths.get(filePath);
+
+        if (!Files.exists(path)) {
+            throw new RuntimeException(
+                    "CSV file not found: " + filePath
+            );
+        }
+
+        try {
+
+            /*
+             * Read file.
+             *
+             * First try UTF-8.
+             * If the CSV was generated with ANSI/
+             * Windows-1252 encoding, fallback to Windows-1252.
+             */
+            String content;
+
+            try {
+
+                byte[] bytes =
+                        Files.readAllBytes(path);
+
+                content =
+                        new String(
+                                bytes,
+                                StandardCharsets.UTF_8
+                        );
+
+            } catch (Exception e) {
+
+                System.out.println(
+                        "UTF-8 reading failed."
+                );
+
+                System.out.println(
+                        "Trying Windows-1252 encoding..."
+                );
+
+                byte[] bytes =
+                        Files.readAllBytes(path);
+
+                content =
+                        new String(
+                                bytes,
+                                Charset.forName("windows-1252")
+                        );
+            }
+
+            /*
+             * Remove BOM.
+             */
+            content =
+                    removeBOM(content);
+
+            /*
+             * Parse complete CSV content.
+             *
+             * This is important because Comments may contain
+             * commas or line breaks.
+             */
+            List<List<String>> records =
+                    parseCSV(content);
+
+            if (records.isEmpty()) {
+                return csvData;
+            }
+
+            /*
+             * First record = header.
+             */
+            List<String> headers =
+                    records.get(0);
+
+            /*
+             * Clean headers.
+             */
+            for (int i = 0;
+                 i < headers.size();
+                 i++) {
+
+                headers.set(
+                        i,
+                        cleanValue(headers.get(i))
+                );
+            }
+
+            /*
+             * Validate headers.
+             */
+            if (headers.isEmpty()) {
+
+                throw new RuntimeException(
+                        "No headers found in CSV file: "
+                                + filePath
+                );
+            }
+
+            /*
+             * =====================================================
+             * READ EVERY CSV RECORD
+             * =====================================================
+             */
+            for (int recordIndex = 1;
+                 recordIndex < records.size();
+                 recordIndex++) {
+
+                List<String> values =
+                        records.get(recordIndex);
+
+                /*
+                 * Ignore completely empty record.
+                 */
+                if (isEmptyRecord(values)) {
+                    continue;
+                }
+
+                /*
+                 * IMPORTANT:
+                 *
+                 * One CSV record = one task.
+                 */
+                Map<String, String> row =
+                        new LinkedHashMap<>();
+
+                /*
+                 * Put every column into the Map.
+                 */
+                for (int columnIndex = 0;
+                     columnIndex < headers.size();
+                     columnIndex++) {
+
+                    String header =
+                            headers.get(columnIndex);
+
+                    String value = "";
+
+                    if (columnIndex < values.size()) {
+
+                        value =
+                                values.get(columnIndex);
+                    }
+
+                    value =
+                            cleanValue(value);
+
+                    row.put(
+                            header,
+                            value
+                    );
+                }
+
+                /*
+                 * Add task record.
+                 */
+                csvData.add(row);
+            }
+
+        } catch (IOException e) {
+
+            throw new RuntimeException(
+                    "Error reading CSV file: "
+                            + filePath,
+                    e
+            );
+        }
+
+        return csvData;
+    }
+
+
+    /**
+     * Alias method if your existing code uses getCsvData().
+     */
+    public static List<Map<String, String>> getCsvData(
+            String filePath) {
+
+        return getCSVData(filePath);
+    }
+
+
+    /**
+     * Parses complete CSV content.
+     *
+     * Handles:
+     *
+     * 1. Commas inside quoted values
+     *
+     * 2. Double quotes
+     *
+     * 3. Multiline quoted values
+     *
+     * 4. Empty values
+     *
+     * Example:
+     *
+     * "Dawn Nicholls, Employee"
+     *
+     * remains one value.
+     *
+     * Example:
+     *
+     * "Details:
+     * Employee requested documents,
+     * completed task"
+     *
+     * remains one CSV field.
+     */
+    private static List<List<String>> parseCSV(
+            String content) {
+
+        List<List<String>> records =
+                new ArrayList<>();
+
+        List<String> currentRecord =
+                new ArrayList<>();
+
+        StringBuilder currentValue =
+                new StringBuilder();
+
+        boolean insideQuotes = false;
+
+        for (int i = 0;
+             i < content.length();
+             i++) {
+
+            char currentChar =
+                    content.charAt(i);
+
+            /*
+             * =====================================================
+             * QUOTE
+             * =====================================================
+             */
+            if (currentChar == '"') {
+
+                /*
+                 * Double quote inside quoted value.
+                 *
+                 * Example:
+                 *
+                 * "John ""Smith"""
+                 *
+                 * becomes:
+                 *
+                 * John "Smith"
+                 */
+                if (insideQuotes
+                        && i + 1 < content.length()
+                        && content.charAt(i + 1) == '"') {
+
+                    currentValue.append('"');
+
+                    i++;
+
+                } else {
+
+                    insideQuotes =
+                            !insideQuotes;
+                }
+
+            }
+
+            /*
+             * =====================================================
+             * COMMA
+             * =====================================================
+             */
+            else if (currentChar == ','
+                    && !insideQuotes) {
+
+                currentRecord.add(
+                        currentValue.toString()
+                );
+
+                currentValue.setLength(0);
+            }
+
+            /*
+             * =====================================================
+             * NEW LINE
+             * =====================================================
+             */
+            else if ((currentChar == '\n'
+                    || currentChar == '\r')
+                    && !insideQuotes) {
+
+                /*
+                 * Add current field.
+                 */
+                currentRecord.add(
+                        currentValue.toString()
+                );
+
+                currentValue.setLength(0);
+
+                /*
+                 * Add complete record.
+                 */
+                if (!isEmptyRecord(currentRecord)) {
+
+                    records.add(
+                            currentRecord
+                    );
+                }
+
+                currentRecord =
+                        new ArrayList<>();
+
+                /*
+                 * Handle Windows CRLF.
+                 */
+                if (currentChar == '\r'
+                        && i + 1 < content.length()
+                        && content.charAt(i + 1) == '\n') {
+
+                    i++;
+                }
+            }
+
+            /*
+             * =====================================================
+             * NORMAL CHARACTER
+             * =====================================================
+             */
+            else {
+
+                currentValue.append(
+                        currentChar
+                );
+            }
+        }
+
+        /*
+         * =====================================================
+         * ADD LAST RECORD
+         * =====================================================
+         */
+        if (currentValue.length() > 0
+                || !currentRecord.isEmpty()) {
+
+            currentRecord.add(
+                    currentValue.toString()
+            );
+
+            if (!isEmptyRecord(currentRecord)) {
+
+                records.add(
+                        currentRecord
+                );
+            }
+        }
+
+        return records;
+    }
+
+
+    /**
+     * Checks whether a record is completely empty.
+     */
+    private static boolean isEmptyRecord(
+            List<String> record) {
+
+        if (record == null
+                || record.isEmpty()) {
+
+            return true;
+        }
+
+        for (String value : record) {
+
+            if (value != null
+                    && !value.trim().isEmpty()) {
+
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+
+    /**
+     * Removes UTF-8 BOM.
+     */
+    private static String removeBOM(
+            String value) {
+
+        if (value == null) {
+            return "";
+        }
+
+        return value.replace(
+                "\uFEFF",
+                ""
+        );
+    }
+
+
+    /**
+     * Cleans CSV field value.
+     */
+    private static String cleanValue(
+            String value) {
+
+        if (value == null) {
+            return "";
+        }
+
+        value =
+                removeBOM(value);
+
+        value =
+                value.trim();
+
+        /*
+         * Remove surrounding quotes if still present.
+         */
+        if (value.length() >= 2
+                && value.startsWith("\"")
+                && value.endsWith("\"")) {
+
+            value =
+                    value.substring(
+                            1,
+                            value.length() - 1
+                    );
+        }
+
+        /*
+         * Convert escaped quotes.
+         */
+        value =
+                value.replace(
+                        "\"\"",
+                        "\""
+                );
+
+        return value.trim();
+    }
+
+
+    /**
+     * Returns number of task records in CSV.
+     *
+     * Header is NOT counted.
+     */
+    public static int getRowCount(
+            String filePath) {
+
+        return getCSVData(filePath).size();
+    }
+
+
+    /**
+     * Returns CSV headers.
+     */
+    public static List<String> getHeaders(
+            String filePath) {
+
+        List<String> headers =
+                new ArrayList<>();
+
+        Path path =
+                Paths.get(filePath);
+
+        if (!Files.exists(path)) {
+
+            throw new RuntimeException(
+                    "CSV file not found: "
+                            + filePath
+            );
+        }
+
+        try {
+
+            byte[] bytes =
+                    Files.readAllBytes(path);
+
+            String content;
+
+            try {
+
+                content =
+                        new String(
+                                bytes,
+                                StandardCharsets.UTF_8
+                        );
+
+            } catch (Exception e) {
+
+                content =
+                        new String(
+                                bytes,
+                                Charset.forName(
+                                        "windows-1252"
+                                )
+                        );
+            }
+
+            content =
+                    removeBOM(content);
+
+            List<List<String>> records =
+                    parseCSV(content);
+
+            if (!records.isEmpty()) {
+
+                for (String header :
+                        records.get(0)) {
+
+                    headers.add(
+                            cleanValue(header)
+                    );
+                }
+            }
+
+        } catch (IOException e) {
+
+            throw new RuntimeException(
+                    "Error reading CSV headers: "
+                            + filePath,
+                    e
+            );
+        }
+
+        return headers;
+    }
+
+
+    /**
+     * Prints complete CSV data.
+     *
+     * Useful for debugging.
+     */
+    public static void printCsvData(
+            String filePath) {
+
+        List<Map<String, String>> data =
+                getCSVData(filePath);
+
+        System.out.println();
+        System.out.println(
+                "================================================"
+        );
+
+        System.out.println(
+                "CSV FILE : " + filePath
+        );
+
+        System.out.println(
+                "TOTAL TASKS IN CSV : "
+                        + data.size()
+        );
+
+        System.out.println(
+                "================================================"
+        );
+
+        int rowNumber = 1;
+
+        for (Map<String, String> row :
+                data) {
+
+            System.out.println();
+            System.out.println(
+                    "---------------- TASK "
+                            + rowNumber
+                            + " ----------------"
+            );
+
+            /*
+             * This is where row.entrySet()
+             * should be used.
+             */
+            for (Map.Entry<String, String> entry :
+                    row.entrySet()) {
+
+                System.out.println(
+                        entry.getKey()
+                                + " = "
+                                + entry.getValue()
+                );
+            }
+
+            rowNumber++;
+        }
+
+        System.out.println();
+        System.out.println(
+                "================================================"
+        );
+    }
+
+
+    /**
+     * Returns one field from a CSV row.
+     */
+    public static String getValue(
+            Map<String, String> row,
+            String fieldName) {
+
+        if (row == null) {
+            return "";
+        }
+
+        String value =
+                row.get(fieldName);
+
+        return value == null
+                ? ""
+                : value.trim();
+    }
+}
