@@ -1,0 +1,714 @@
+@When("User compares Disability Claim task data with UI")
+    public void compareDisabilityClaimTaskDataWithUI() {
+
+        String csvFilePath = System.getProperty("user.dir") + "/testData/TaskUploader/tasks-outLatest.csv";
+        List<Map<String, String>> csvRows = csvUtil.getCSVData(csvFilePath);
+
+
+        if (csvRows == null || csvRows.isEmpty()) {
+
+            throw new RuntimeException("No records found in CSV: " + csvFilePath);
+        }
+        System.out.println("Total CSV Records = " + csvRows.size());
+
+        Map<String, List<Map<String, String>>> claimTaskMap = new LinkedHashMap<>();
+
+        for (Map<String, String> row : csvRows) {
+
+            String claimNumber = getCsvValue(row, "Claim Number");
+            System.out.println("Claim Number : " + claimNumber);
+
+            if (claimNumber == null || claimNumber.trim().isEmpty()) {
+
+                continue;
+            }
+
+            claimNumber = normalize(claimNumber);
+
+            claimTaskMap.computeIfAbsent(claimNumber, k -> new ArrayList<>()).add(row);
+        }
+
+        System.out.println("Total Claims = " + claimTaskMap.size());
+
+        String reportFolder = System.getProperty("user.dir") + "/testResult/TaskComparison";
+
+        extent = ExtentManager.getInstance(reportFolder);
+
+        for (Map.Entry<String, List<Map<String, String>>> claimEntry : claimTaskMap.entrySet()) {
+
+            String claimNumber = claimEntry.getKey();
+
+            List<Map<String, String>> expectedTasks = claimEntry.getValue();
+
+            ExtentTest claimTest = extent.createTest("Claim Number : " + claimNumber);
+            List<Map<String, String>> missingTasks = new ArrayList<>();
+            try {
+                claimTest.info("CSV Task Count : " + expectedTasks.size());
+                driver.navigate().refresh();
+                base.Common.waitHighlightAndClick(driver, cp.MainPageSearch_txt, sc, "Main page Search Box", 20, 2);
+
+                cp.getEnterAndSearchItemICon(claimNumber, "ClaimNumber");
+                List<WebElement> imgPresent = driver.findElements(By.xpath("//img[@src='/img/search/no-results.png']"));
+                if (imgPresent.size() >= 1) {
+                    claimTest.fail("Claim Number : " + claimNumber + " Not present in UI");
+                } else {
+                    base.Common.Click(driver, cp.ClaimNoQA_lnk, sc, "Claim", true, true, true, false, 4, 2);
+
+                    Thread.sleep(3000);
+                    driver.navigate().refresh();
+
+                    claimTest.pass("Claim searched successfully : " + claimNumber);
+                    Thread.sleep(3000);
+
+                    JavascriptExecutor jse1 = (JavascriptExecutor) driver;
+                    jse1.executeScript("arguments[0].scrollIntoView(true);", cp.BCNoQA_lnk);
+
+                    base.Common.Click(driver, cp.BCNoQA_lnk, sc, "BCNoQA_lnk", true, true, true, false, 4, 2);
+                    parentWindow = driver.getWindowHandle();
+
+                    Thread.sleep(3000);
+                    List<WebElement> ViewMore = driver.findElements(By.xpath("//div[contains(@id,'upcoming-activities-section')]//following::button[text()='View More']"));
+                    int NoViewMorebuttons = ViewMore.size();
+                    System.out.println("No of View More Button-->" + NoViewMorebuttons);
+                    if (NoViewMorebuttons != 0) {
+                        int lastelement = NoViewMorebuttons - 1;
+                        System.out.println("No of Edit Button Clicked-->" + NoViewMorebuttons);
+
+                        WebElement viewAll = ViewMore.get(lastelement);
+
+                        JavascriptExecutor js = (JavascriptExecutor) driver;
+
+                        js.executeScript("arguments[0].scrollIntoView({block:'center'});", viewAll);
+
+                        Thread.sleep(3000);
+
+                        js.executeScript("arguments[0].click();", viewAll);
+                    }
+                    Thread.sleep(3000);
+                    List<WebElement> parentTasks = driver.findElements(By.xpath("//div[contains(@id,'upcoming-activities-section')]//li"));
+
+                    List<WebElement> actualParentTasks  = parentTasks.size() > 1 ? parentTasks.subList(1, parentTasks.size()) : Collections.emptyList();
+
+                    int parentCount = actualParentTasks.size();
+
+                    System.out.println("Actual Parent Count = " + parentCount);
+                    int NoExpandAllbuttons = cp.tasksExpandAll_list.size();
+                    System.out.println("No of Expand All Button-->" + NoExpandAllbuttons);
+                    if (NoExpandAllbuttons != 0) {
+                        int lastelement = NoExpandAllbuttons - 1;
+                        System.out.println("No of Expand All Clicked-->" + NoExpandAllbuttons);
+                        WebElement viewAll = cp.tasksExpandAll_list.get(lastelement);
+
+                        JavascriptExecutor js = (JavascriptExecutor) driver;
+
+                        js.executeScript("arguments[0].scrollIntoView({block:'center'});", viewAll);
+
+                        Thread.sleep(3000);
+
+                        js.executeScript("arguments[0].click();", viewAll);
+                    }
+                    int NoViewAllbuttons = cp.parenttasksViewAll_lnk.size();
+                    System.out.println("No of View All Button-->" + NoViewAllbuttons);
+                    if (NoViewAllbuttons != 0) {
+                        int lastelement = NoViewAllbuttons - 1;
+                        System.out.println("No of View All Clicked-->" + NoViewAllbuttons);
+                        WebElement viewAll = cp.parenttasksViewAll_lnk.get(lastelement);
+
+                        JavascriptExecutor js = (JavascriptExecutor) driver;
+
+                        js.executeScript("arguments[0].scrollIntoView({block:'center'});", viewAll);
+
+                        Thread.sleep(1000);
+
+                        js.executeScript("arguments[0].click();", viewAll);
+                    }
+
+                    Thread.sleep(3000);
+                    claimTest.info("Clicked View All to display all tasks.");
+
+                    switchToTaskWindow();
+
+                    Thread.sleep(2000);
+
+                    List<WebElement> uiTaskCards = driver.findElements(By.xpath("//table[contains(@class,'slds-panel-item')]"));
+
+                    int uiTaskCount = uiTaskCards.size();
+                    System.out.println("UI Tasks count : " + uiTaskCount);
+
+                    claimTest.info("CSV Task Count : " + expectedTasks.size());
+
+                    claimTest.info("UI Task Count : " + uiTaskCount);
+
+                    claimTest.info("Parent Window Task Count : " + actualParentTasks.size());
+
+                    uiTaskCount += actualParentTasks.size();
+                    if (expectedTasks.size() == uiTaskCount) {
+
+                        claimTest.pass("Task Count Validation PASSED" + "<br>CSV Task Count : " + expectedTasks.size() + "<br>UI Task Count : " + uiTaskCount);
+
+                    } else {
+
+                        claimTest.fail("Task Count Validation FAILED" + "<br>CSV Task Count : " + expectedTasks.size() + "<br>UI Task Count : " + uiTaskCount);
+                    }
+
+                    missingTasks = validateTasksAgainstChildWindow(claimTest, expectedTasks, uiTaskCards);
+                }
+
+            } catch (Exception e) {
+
+                claimTest.fail("Claim processing failed : " + e.getMessage());
+
+            } finally {
+
+                try {
+
+                    if (!driver.getWindowHandle().equals(parentWindow)) {
+
+                        driver.close();
+
+                        driver.switchTo().window(parentWindow);
+                    }
+                    int NoExpandAllbuttons = cp.tasksExpandAll_list.size();
+                    System.out.println("No of Expand All Button-->" + NoExpandAllbuttons);
+                    if (NoExpandAllbuttons != 0) {
+                        int lastelement = NoExpandAllbuttons - 1;
+                        System.out.println("No of Expand All Clicked-->" + NoExpandAllbuttons);
+                        WebElement viewAll = cp.tasksExpandAll_list.get(lastelement);
+
+                        JavascriptExecutor js = (JavascriptExecutor) driver;
+
+                        js.executeScript("arguments[0].scrollIntoView({block:'center'});", viewAll);
+
+                        Thread.sleep(1000);
+
+                        js.executeScript("arguments[0].click();", viewAll);
+                    }
+
+                    Thread.sleep(3000);
+                    List<WebElement> ViewMore = driver.findElements(By.xpath("//div[contains(@id,'upcoming-activities-section')]//following::button[text()='View More']"));
+                    int NoViewMorebuttons = ViewMore.size();
+                    System.out.println("No of View More Button-->" + NoViewMorebuttons);
+                    if (NoViewMorebuttons != 0) {
+                        int lastelement = NoViewMorebuttons - 1;
+                        System.out.println("No of Edit Button Clicked-->" + NoViewMorebuttons);
+                        WebElement viewAll = ViewMore.get(lastelement);
+
+                        JavascriptExecutor js = (JavascriptExecutor) driver;
+
+                        js.executeScript("arguments[0].scrollIntoView({block:'center'});", viewAll);
+
+                        Thread.sleep(3000);
+
+                        js.executeScript("arguments[0].click();", viewAll);
+                    }
+                    List<WebElement> parentTasks = getParentWindowTasks();
+
+                    List<WebElement> actualParentTasks = parentTasks.size() > 1 ? parentTasks.subList(1, parentTasks.size()) : Collections.emptyList();
+
+                    validateMissingTasksInParent(claimTest, missingTasks, actualParentTasks);
+
+                } catch (Exception e) {
+
+                    System.out.println(e.getMessage());
+                }
+            }
+
+        }
+
+        extent.flush();
+    }
+
+
+
+    private void switchToTaskWindow() {
+
+        String current = driver.getWindowHandle();
+
+        for (String handle : driver.getWindowHandles()) {
+
+            if (!handle.equals(current)) {
+
+                driver.switchTo().window(handle);
+                return;
+            }
+        }
+    }
+
+
+    private By subject = By.xpath(".//div[text()='Subject']/following-sibling::div[1]");
+
+    private By primaryName = By.xpath(".//div[text()='Primary Name']/following-sibling::div[1]");
+
+    private By dueDate = By.xpath(".//div[text()='Due Date']/following-sibling::div[1]");
+
+    private By assignedTo = By.xpath(".//div[text()='Assigned To']/following-sibling::div[1]");
+
+    private By lastModifiedDate = By.xpath(".//div[text()='Last Modified Date']/following-sibling::div[1]");
+
+    private By comments = By.xpath(".//div[text()='Comments']/following-sibling::div[1]");
+
+
+    private Map<String, String> readUiTask(WebElement taskCard) {
+
+
+        Map<String, String> data = new LinkedHashMap<>();
+
+        data.put("Due Date", getText(taskCard, dueDate));
+
+        data.put("Assigned To", getText(taskCard, assignedTo));
+
+        data.put("Last Modified Date", getText(taskCard, lastModifiedDate));
+
+        data.put("Comments", getText(taskCard, comments));
+
+
+        return data;
+    }
+
+
+    private String getText(WebElement parent, By locator) {
+
+
+        try {
+
+            WebElement element = parent.findElement(locator);
+
+
+            return normalize(element.getText());
+
+        } catch (Exception e) {
+
+            return "";
+        }
+    }
+
+
+    private Map<String, String> decodeComments(String comment) {
+
+
+        Map<String, String> data = new LinkedHashMap<>();
+
+
+        if (comment == null) {
+
+            return data;
+        }
+
+
+        String text = StringEscapeUtils.unescapeHtml4(comment);
+
+        text = text.replaceAll("(?i)</?p>", " ").replaceAll("(?i)<br\\s*/?>", " ");
+
+        text = normalize(text);
+
+
+        String workcell = extract(text, "Assign\\s*To\\s*:\\s*(.*?)(?=Task\\s*Type\\s*:|$)");
+
+
+        if (workcell.isEmpty()) {
+
+            workcell = extract(text, "Assign\\s*To\\s*:\\s*(.*?)(?=Task\\s*Type\\s*:|$)");
+
+        }
+
+
+        data.put("Assign To", normalize(workcell));
+
+
+        String taskType = extract(text, "Task\\s*Type\\s*:\\s*(.*?)(?=Details\\s*:|$)");
+
+
+        data.put("Task Type", normalize(taskType));
+
+
+        String details = extract(text, "(?s)Details\\s*:\\s*(.*?)(?=Completed\\s*Date\\s*:|$)");
+
+        details = StringEscapeUtils.unescapeHtml4(details).replaceAll("\\s+", " ").trim();
+
+
+        data.put("Details", details);
+
+
+        String completedDate = extract(text, "Completed\\s*Date\\s*:\\s*(.*?)(?=$)");
+
+        if (completedDate.matches("\\d{1,2}/\\d{1,2}/\\d{2}")) {
+
+            LocalDate date = LocalDate.parse(completedDate, DateTimeFormatter.ofPattern("M/d/yy"));
+
+            completedDate = date.format(DateTimeFormatter.ofPattern("M/d/yyyy"));
+        }
+
+        data.put("Completed Date", completedDate);
+
+
+        return data;
+    }
+
+
+    private String extract(String text, String regex) {
+
+        try {
+
+            Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+
+
+            Matcher matcher = pattern.matcher(text);
+
+
+            if (matcher.find()) {
+
+                return matcher.group(1);
+            }
+
+
+        } catch (Exception e) {
+
+            System.out.println("Regex error : " + regex);
+        }
+
+
+        return "";
+    }
+
+
+
+    private void validateField(ExtentTest taskNode, Map<String, String> csvData, Map<String, String> uiData, String fieldName) {
+
+
+        String expected = getCsvValue(csvData, fieldName);
+
+
+        String actual = uiData.get(fieldName);
+
+
+        if (actual == null) {
+
+            actual = "";
+        }
+
+        expected = normalize(expected);
+
+
+        actual = normalize(actual);
+
+        boolean matched = expected.equalsIgnoreCase(actual);
+
+
+        if (matched) {
+
+            taskNode.pass("<b>" + fieldName + "</b>" + "<br>Expected : " + expected + "<br>Actual : " + actual + "<br>Status : PASS");
+
+        } else {
+
+            taskNode.fail("<b>" + fieldName + "</b>" + "<br>Expected : " + expected + "<br>Actual : " + actual + "<br>Status : FAIL");
+        }
+    }
+
+
+    private String getCsvValue(Map<String, String> row, String fieldName) {
+
+
+        if (row == null) {
+
+            return "";
+        }
+
+        if (row.containsKey(fieldName)) {
+
+            return row.get(fieldName);
+        }
+
+
+        for (Map.Entry<String, String> entry : row.entrySet()) {
+
+
+            if (entry.getKey().equalsIgnoreCase(fieldName)) {
+
+                return entry.getValue();
+            }
+        }
+
+
+        if (fieldName.equalsIgnoreCase("Workcell")) {
+
+            return findCsvValue(row, "Description");
+        }
+
+
+        if (fieldName.equalsIgnoreCase("Task Type")) {
+
+            return findCsvValue(row, "Task Type");
+        }
+
+
+        if (fieldName.equalsIgnoreCase("Due Date")) {
+
+            return findCsvValue(row, "Due Date");
+        }
+
+
+        if (fieldName.equalsIgnoreCase("Assign To")) {
+
+            return findCsvValue(row, "Assign To");
+        }
+
+
+        if (fieldName.equalsIgnoreCase("Details")) {
+
+            return findCsvValue(row, "Forwarded Details");
+        }
+
+
+        return "";
+    }
+
+
+    private String findCsvValue(Map<String, String> row, String columnName) {
+
+
+        for (Map.Entry<String, String> entry : row.entrySet()) {
+
+
+            if (entry.getKey().equalsIgnoreCase(columnName)) {
+
+                return entry.getValue();
+            }
+        }
+
+
+        return "";
+    }
+
+
+
+    private String normalize(String value) {
+
+
+        if (value == null) {
+
+            return "";
+        }
+
+
+        return value.replace("\u00A0", " ").replace("&nbsp;", " ").replaceAll("\\s+", " ").trim();
+    }
+
+
+    private Map<String, List<Map<String, String>>> buildUiTaskLookup(List<WebElement> uiTaskCards) {
+
+        Map<String, List<Map<String, String>>> lookupMap = new HashMap<>();
+
+        for (WebElement card : uiTaskCards) {
+
+            try {
+
+                Map<String, String> uiData = readUiTask(card);
+
+                Map<String, String> commentData = decodeComments(uiData.get("Comments"));
+
+                uiData.putAll(commentData);
+
+                String key = createKey(uiData.get("Due Date"), uiData.get("Assign To"), uiData.get("Details"));
+
+                lookupMap.computeIfAbsent(key, k -> new ArrayList<>()).add(uiData);
+
+            } catch (Exception e) {
+
+                System.out.println("Unable to process UI Task : " + e.getMessage());
+            }
+        }
+
+        return lookupMap;
+    }
+
+    private List<Map<String, String>> validateTasksAgainstChildWindow(ExtentTest claimTest, List<Map<String, String>> csvTasks, List<WebElement> uiTaskCards) {
+
+        List<Map<String, String>> missingTasks = new ArrayList<>();
+
+        Map<String, List<Map<String, String>>> uiTaskLookup = buildUiTaskLookup(uiTaskCards);
+
+        for (int i = 0; i < csvTasks.size(); i++) {
+
+            Map<String, String> csvTask = csvTasks.get(i);
+
+            ExtentTest taskNode = claimTest.createNode("Task " + (i + 1));
+
+            String key = createKey(getCsvValue(csvTask, "Due Date"), getCsvValue(csvTask, "Assign To"), getCsvValue(csvTask, "Details"));
+
+            List<Map<String, String>> uiMatches = uiTaskLookup.get(key);
+
+            Map<String, String> uiData = null;
+
+            if (uiMatches != null && !uiMatches.isEmpty()) {
+
+                String csvCompletedDate = getCsvValue(csvTask, "Completed Date");
+
+                Iterator<Map<String, String>> iterator = uiMatches.iterator();
+
+                while (iterator.hasNext()) {
+
+                    Map<String, String> candidate = iterator.next();
+
+                    if (Objects.equals(candidate.get("Completed Date"), csvCompletedDate)) {
+
+                        uiData = candidate;
+
+                        iterator.remove();
+
+                        break;
+                    }
+                }
+            }
+
+            if (uiData == null) {
+
+                taskNode.warning("No Matching UI Task Found" + "<br>Due Date : " + getCsvValue(csvTask, "Due Date") + "<br>Assign To : " + getCsvValue(csvTask, "Assign To") + "<br>Details : " + getCsvValue(csvTask, "Details") + "<br>Completed Date : " + getCsvValue(csvTask, "Completed Date"));
+
+                missingTasks.add(csvTask);
+
+                continue;
+            }
+
+            taskNode.pass("Found in Child Window");
+
+            validateField(taskNode, csvTask, uiData, "Due Date");
+
+            validateField(taskNode, csvTask, uiData, "Assign To");
+
+            validateField(taskNode, csvTask, uiData, "Task Type");
+
+            validateField(taskNode, csvTask, uiData, "Details");
+
+            validateField(taskNode, csvTask, uiData, "Completed Date");
+        }
+
+        return missingTasks;
+    }
+
+    private void validateMissingTasksInParent(ExtentTest claimTest, List<Map<String, String>> missingTasks, List<WebElement> parentTasks) {
+
+        Map<String, Map<String, String>> parentLookup = buildParentTaskLookup(parentTasks);
+
+        for (Map<String, String> csvTask : missingTasks) {
+
+            String key = createKey(getCsvValue(csvTask, "Due Date"), getCsvValue(csvTask, "Assign To"), getCsvValue(csvTask, "Details"));
+
+            Map<String, String> uiData = parentLookup.get(key);
+
+            ExtentTest taskNode = claimTest.createNode("Parent Window Validation");
+
+            if (uiData == null) {
+
+                taskNode.fail("No Matching UI Task Found in Parent Window" + "<br>Due Date : " + getCsvValue(csvTask, "Due Date") + "<br>Assign To : " + getCsvValue(csvTask, "Assign To") + "<br>Details : " + getCsvValue(csvTask, "Details"));
+
+                continue;
+            }
+
+            taskNode.pass("Task Found In Parent Window");
+
+            validateField(taskNode, csvTask, uiData, "Due Date");
+
+            validateField(taskNode, csvTask, uiData, "Assign To");
+
+            validateField(taskNode, csvTask, uiData, "Task Type");
+
+            validateField(taskNode, csvTask, uiData, "Details");
+        }
+    }
+
+    private String createKey(String dueDate, String assignTo, String details) {
+
+        return normalize(dueDate) + "|" + normalize(assignTo) + "|" + normalize(details);
+    }
+
+    private List<WebElement> getParentWindowTasks() {
+
+        return driver.findElements(By.xpath("//div[contains(@id,'upcoming-activities-section')]//li"));
+    }
+
+    private Map<String, String> readParentTask(WebElement taskCard) {
+
+        Map<String, String> data = new LinkedHashMap<>();
+
+        try {
+
+            data.put("Due Date", normalizeDueDate(taskCard.findElement(By.xpath(".//div[contains(@class,'dueDate')]")).getText()));
+
+        } catch (Exception e) {
+
+            data.put("Due Date", "");
+        }
+
+        try {
+
+
+            data.put("Description", taskCard.findElement(By.xpath(".//div[contains(@class,'description body')]")).getText());
+
+        } catch (Exception e) {
+
+            data.put("Description", "");
+        }
+
+        return data;
+    }
+
+    private Map<String, Map<String, String>> buildParentTaskLookup(List<WebElement> parentTasks) {
+
+        Map<String, Map<String, String>> lookup = new HashMap<>();
+
+        for (WebElement task : parentTasks) {
+
+            Map<String, String> uiData = readParentTask(task);
+
+            Map<String, String> descData = decodeComments(uiData.get("Description"));
+
+            uiData.putAll(descData);
+
+            String key = createKey(normalizeDueDate(uiData.get("Due Date")), uiData.get("Assign To"), uiData.get("Details"));
+
+            lookup.put(key, uiData);
+        }
+
+        return lookup;
+    }
+
+    private String normalizeDueDate(String value) {
+
+        if (value == null || value.trim().isEmpty()) {
+            return "";
+        }
+
+        value = value.trim();
+
+
+        value = value.replace("Overdue", "").trim();
+
+        try {
+
+            if (value.matches("\\d{1,2}/\\d{1,2}/\\d{4}")) {
+
+                LocalDate date = LocalDate.parse(value, DateTimeFormatter.ofPattern("M/d/yyyy"));
+
+                return date.format(DateTimeFormatter.ofPattern("M/d/yyyy"));
+            }
+
+            if (value.matches("[A-Za-z]{3}\\s+\\d{1,2},\\s*\\d{4}")) {
+
+                LocalDate date = LocalDate.parse(value, DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.ENGLISH));
+
+                return date.format(DateTimeFormatter.ofPattern("M/d/yyyy"));
+            }
+
+            if (value.matches("[A-Za-z]{3}\\s+\\d{1,2}")) {
+
+                LocalDate date = LocalDate.parse(value + " " + LocalDate.now().getYear(), DateTimeFormatter.ofPattern("MMM d yyyy", Locale.ENGLISH));
+
+                return date.format(DateTimeFormatter.ofPattern("M/d/yyyy"));
+            }
+
+        } catch (Exception e) {
+            System.out.println("Date conversion failed : " + value);
+        }
+
+        return normalize(value);
+    }
