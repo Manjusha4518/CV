@@ -1,0 +1,36 @@
+private void validateSourceFieldsAgainstUI(
+        Map<String, String> sourceRow,
+        String psName,
+        ExtentTest test) throws Exception {
+
+    test.info("Validating source fields for: " + psName);
+
+    String policyNumber =
+            getCsvValue(sourceRow, "Policy Number");
+
+    String paymentType =
+            getCsvValue(sourceRow, "Payment Type");
+
+    String startDate =
+            getCsvValue(sourceRow, "Start Date");
+
+    String throughDate =
+            getCsvValue(sourceRow, "Through Date");
+
+    String amount =
+            getCsvValue(sourceRow, "Amount");
+
+    String period =
+            getCsvValue(sourceRow, "Period");
+
+    // Example:
+    // String uiPolicyNumber = ...
+    // validatePaymentField(
+    //         test,
+    //         "Policy Number",
+    //         policyNumber,
+    //         uiPolicyNumber
+    // );
+
+    // Add your actual UI locators/field extraction here.
+}
