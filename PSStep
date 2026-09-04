@@ -1,0 +1,118 @@
+@When("User validates Payment Specification data with Claims UI")
+public void validatePaymentSpecificationDataWithClaimsUI() throws Exception {
+
+    String sourceFile = System.getProperty("user.dir")
+            + "/testData/PaymentSpecification_out.csv";
+
+    String loadedFile = System.getProperty("user.dir")
+            + "/testData/loaded payment specs disability 08-20-2026.csv";
+
+    List<Map<String, String>> sourceData =
+            csvUtil.getCSVData(sourceFile);
+
+    List<Map<String, String>> loadedData =
+            csvUtil.getCSVData(loadedFile);
+
+    // ---------------------------------------------------------
+    // Build lookup: Unique Key -> Payment Specification Name
+    // ---------------------------------------------------------
+
+    Map<String, String> psNameLookup = new HashMap<>();
+
+    for (Map<String, String> loadedRow : loadedData) {
+
+        String uniqueKey =
+                normalize(getCsvValue(loadedRow, "Unique Key"));
+
+        String psName =
+                normalize(getCsvValue(loadedRow, "Name"));
+
+        if (!uniqueKey.isEmpty() && !psName.isEmpty()) {
+            psNameLookup.put(uniqueKey, psName);
+        }
+    }
+
+    // ---------------------------------------------------------
+    // Process source CSV
+    // ---------------------------------------------------------
+
+    for (Map<String, String> sourceRow : sourceData) {
+
+        String claimNumber =
+                normalize(getCsvValue(sourceRow, "Claim Number"));
+
+        String claimBusinessObjNumber =
+                normalize(getCsvValue(
+                        sourceRow,
+                        "Claim Business Obj Number"));
+
+        String objectNumber =
+                normalize(getCsvValue(
+                        sourceRow,
+                        "Object Number"));
+
+        // Create Unique Key
+        String uniqueKey =
+                claimBusinessObjNumber + "-" + objectNumber;
+
+        // Get PS Name from loaded CSV
+        String psName = psNameLookup.get(uniqueKey);
+
+        ExtentTest test = extent.createTest(
+                "Payment Specification - " + psName);
+
+        test.info("Claim Number: " + claimNumber);
+        test.info("Claim Business Obj Number: "
+                + claimBusinessObjNumber);
+        test.info("Object Number: " + objectNumber);
+        test.info("Unique Key: " + uniqueKey);
+
+        // -----------------------------------------------------
+        // Validate Unique Key exists in loaded file
+        // -----------------------------------------------------
+
+        if (psName == null || psName.isEmpty()) {
+
+            test.fail(
+                    "Unique Key not found in loaded Payment "
+                    + "Specification file: " + uniqueKey);
+
+            continue;
+        }
+
+        test.pass(
+                "Unique Key found: " + uniqueKey);
+
+        test.info(
+                "Payment Specification Name: " + psName);
+
+        // -----------------------------------------------------
+        // DIRECTLY SEARCH PAYMENT SPECIFICATION IN UI
+        // -----------------------------------------------------
+
+        boolean psFound =
+                searchPaymentSpecificationInUI(psName);
+
+        if (!psFound) {
+
+            test.fail(
+                    "Payment Specification not found in UI: "
+                            + psName);
+
+            continue;
+        }
+
+        test.pass(
+                "Payment Specification found in UI: "
+                        + psName);
+
+        // -----------------------------------------------------
+        // Validate SOURCE fields against UI
+        // -----------------------------------------------------
+
+        validateSourceFieldsAgainstUI(
+                sourceRow,
+                psName,
+                test);
+    }
+}
